@@ -3,15 +3,16 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::io::{BufferedReader, File};
 use std::rand::{Rng, task_rng};
+use std::rc::Rc;
 
 trait States<T: PartialEq> {
-    fn add(&mut self, token: T);
-    fn next(&self) -> T;
+    fn add(&mut self, token: Rc<T>);
+    fn next(&self) -> Rc<T>;
 }
 
 struct State<T: PartialEq> {
     occurrences: uint,
-    token: T
+    token: Rc<T>
 }
 
 impl<T: PartialEq> PartialEq for State<T> {
@@ -21,7 +22,7 @@ impl<T: PartialEq> PartialEq for State<T> {
 }
 
 impl<T: PartialEq> State<T> {
-    pub fn new(token: T) -> State<T> {
+    pub fn new(token: Rc<T>) -> State<T> {
         State { token: token, occurrences: 1u }
     }
 
@@ -33,13 +34,13 @@ impl<T: PartialEq> State<T> {
         self.occurrences
     }
 
-    pub fn token(&self) -> &T {
-        &self.token
+    pub fn token(&self) -> Rc<T> {
+        self.token.clone()
     }
 }
 
-impl<T: Hash + Clone + PartialEq> States<T> for Vec<State<T>> {
-    fn add(&mut self, token: T) {
+impl<T: PartialEq> States<T> for Vec<State<T>> {
+    fn add(&mut self, token: Rc<T>) {
         let state = State::new(token);
         match self.position_elem(&state) {
             Some(i) => self[i].inc(),
@@ -47,7 +48,7 @@ impl<T: Hash + Clone + PartialEq> States<T> for Vec<State<T>> {
         }
     }
     
-    fn next(&self) -> T {
+    fn next(&self) -> Rc<T> {
         let mut sum = 0;
         for state in self.iter() {
             sum += state.val();
@@ -65,14 +66,16 @@ impl<T: Hash + Clone + PartialEq> States<T> for Vec<State<T>> {
     }
 }
 
-pub struct Chain<T: Eq + Hash + Clone> {
-    map: HashMap<T, Vec<State<T>>>,
-    start: T,
-    end: T,
+pub struct Chain<T: Eq + Hash> {
+    map: HashMap<Rc<T>, Vec<State<T>>>,
+    start: Rc<T>,
+    end: Rc<T>,
 }
 
-impl<T: Eq + Hash + Clone> Chain<T> {
+impl<T: Eq + Hash> Chain<T> {
     pub fn new(start: T, end: T) -> Chain<T> {
+        let start = Rc::new(start);
+        let end = Rc::new(end);
         Chain { 
             map: {
                 let mut map = HashMap::new();
@@ -85,16 +88,18 @@ impl<T: Eq + Hash + Clone> Chain<T> {
 
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
         if tokens.len() == 0 { return self }
-        self.map[self.start].add(tokens[0].clone());
         let mut past = None;
-        for token in tokens.iter() {
+        for token in tokens.into_iter() {
+            let rc = Rc::new(token);
             if let Some(ref past) = past {
                 if !self.map.contains_key(past) {
                     self.map.insert(past.clone(), Vec::new());
                 }
-                self.map[*past].add(token.clone())
+                self.map[*past].add(rc.clone())
+            } else {
+                self.map[self.start].add(rc.clone());
             }
-            past = Some(token.clone())
+            past = Some(rc)
         }
         let past = past.unwrap();
         if !self.map.contains_key(&past) {
@@ -104,7 +109,7 @@ impl<T: Eq + Hash + Clone> Chain<T> {
         self
     }
 
-    pub fn generate(&self) -> Vec<T> {
+    pub fn generate(&self) -> Vec<Rc<T>> {
         let mut ret = Vec::new();
         let mut curs = self.start.clone();
         while curs != self.end {
