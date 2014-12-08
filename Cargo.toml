@@ -2,4 +2,9 @@
 
 name = "markov"
 version = "0.0.1"
+description = "A generic markov chain implementation in Rust."
 authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
+license = "MPL"
+keywords = ["markov", "chain", "probability"]
+repository = "https://github.com/aaronweiss74/markov"
+readme = "README.md"
