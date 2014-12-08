@@ -130,7 +130,7 @@ impl Chain<String> {
         let mut reader = BufferedReader::new(File::open(path));
         for line in reader.lines() {
             let line = line.unwrap();
-            let words: Vec<_> = line.split(|c: char| [' ', '\t', '\n', '\r'].contains(&c))
+            let words: Vec<_> = line.split([' ', '\t', '\n', '\r'][])
                                     .filter(|word| !word.is_empty())
                                     .collect();
             self.feed(words.iter().map(|s| s.into_string()).collect());

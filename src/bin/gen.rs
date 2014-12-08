@@ -8,5 +8,5 @@ fn main() {
     println!("feeding data...");
     chain.feed_file(&Path::new("corpus"));
     println!("generating...");
-    println!("{}", chain.generate_str())
+    println!("{}", chain.generate_str());
 }
