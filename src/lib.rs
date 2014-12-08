@@ -18,7 +18,7 @@ impl<T: Eq + Hash> States<T> for HashMap<Rc<T>, uint> {
             Vacant(e) => { e.set(1); },
         }
     }
-    
+
     fn next(&self) -> Rc<T> {
         let mut sum = 0;
         for &value in self.values() {
@@ -57,7 +57,7 @@ impl<T: Eq + Hash> Chain<T> {
             start: start, end: end
         }
     }
-    
+
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
         if tokens.len() == 0 { return self }
         let mut toks = Vec::new();
