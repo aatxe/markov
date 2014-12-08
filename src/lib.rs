@@ -1,5 +1,6 @@
 #![feature(slicing_syntax)]
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::hash::Hash;
 use std::io::{BufferedReader, File};
 use std::rand::{Rng, task_rng};
@@ -10,64 +11,33 @@ trait States<T: PartialEq> {
     fn next(&self) -> Rc<T>;
 }
 
-struct State<T: PartialEq> {
-    occurrences: uint,
-    token: Rc<T>
-}
-
-impl<T: PartialEq> PartialEq for State<T> {
-    fn eq(&self, other: &State<T>) -> bool {
-        self.token == other.token
-    }
-}
-
-impl<T: PartialEq> State<T> {
-    pub fn new(token: Rc<T>) -> State<T> {
-        State { token: token, occurrences: 1u }
-    }
-
-    pub fn inc(&mut self) {
-        self.occurrences += 1
-    }
-
-    pub fn val(&self) -> uint {
-        self.occurrences
-    }
-
-    pub fn token(&self) -> Rc<T> {
-        self.token.clone()
-    }
-}
-
-impl<T: PartialEq> States<T> for Vec<State<T>> {
+impl<T: Eq + Hash> States<T> for HashMap<Rc<T>, uint> {
     fn add(&mut self, token: Rc<T>) {
-        let state = State::new(token);
-        match self.position_elem(&state) {
-            Some(i) => self[i].inc(),
-            None => self.push(state),
+        match self.entry(token) {
+            Occupied(mut e) => *e.get_mut() += 1,
+            Vacant(e) => { e.set(1); },
         }
     }
-    
     fn next(&self) -> Rc<T> {
         let mut sum = 0;
-        for state in self.iter() {
-            sum += state.val();
+        for &value in self.values() {
+            sum += value;
         }
         let mut rng = task_rng();
-        let cap = rng.gen_range(0, sum + 1);
+        let cap = rng.gen_range(0, sum);
         sum = 0;
-        for state in self.iter() {
-            sum += state.val();
-            if sum >= cap {
-                return state.token().clone()
+        for (key, &value) in self.iter() {
+            sum += value;
+            if sum > cap {
+                return key.clone()
             }
         }
-        self.iter().next().unwrap().token().clone()
+        unreachable!("RNG failed")
     }
 }
 
 pub struct Chain<T: Eq + Hash> {
-    map: HashMap<Rc<T>, Vec<State<T>>>,
+    map: HashMap<Rc<T>, HashMap<Rc<T>, uint>>,
     start: Rc<T>,
     end: Rc<T>,
 }
@@ -76,39 +46,33 @@ impl<T: Eq + Hash> Chain<T> {
     pub fn new(start: T, end: T) -> Chain<T> {
         let start = Rc::new(start);
         let end = Rc::new(end);
-        Chain { 
+        Chain {
             map: {
                 let mut map = HashMap::new();
-                map.insert(start.clone(), Vec::new());
+                map.insert(start.clone(), HashMap::new());
+                map.insert(end.clone(), HashMap::new());
                 map
-            }, 
-            start: start, end: end 
+            },
+            start: start, end: end
         }
     }
-
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
         if tokens.len() == 0 { return self }
-        let mut past = None;
-        for token in tokens.into_iter() {
+        let mut toks = Vec::new();
+        toks.push(self.start.clone());
+        toks.extend(tokens.into_iter().map(|token| {
             let rc = Rc::new(token);
-            if let Some(ref past) = past {
-                if !self.map.contains_key(past) {
-                    self.map.insert(past.clone(), Vec::new());
-                }
-                self.map[*past].add(rc.clone())
-            } else {
-                self.map[self.start].add(rc.clone());
+            if !self.map.contains_key(&rc) {
+                self.map.insert(rc.clone(), HashMap::new());
             }
-            past = Some(rc)
+            rc
+        }));
+        toks.push(self.end.clone());
+        for p in toks.windows(2) {
+            self.map[p[0]].add(p[1].clone());
         }
-        let past = past.unwrap();
-        if !self.map.contains_key(&past) {
-            self.map.insert(past.clone(), Vec::new());
-        }
-        self.map[past].add(self.end.clone());
         self
     }
-
     pub fn generate(&self) -> Vec<Rc<T>> {
         let mut ret = Vec::new();
         let mut curs = self.start.clone();
