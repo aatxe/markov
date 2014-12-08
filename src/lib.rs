@@ -18,6 +18,7 @@ impl<T: Eq + Hash> States<T> for HashMap<Rc<T>, uint> {
             Vacant(e) => { e.set(1); },
         }
     }
+    
     fn next(&self) -> Rc<T> {
         let mut sum = 0;
         for &value in self.values() {
@@ -32,7 +33,7 @@ impl<T: Eq + Hash> States<T> for HashMap<Rc<T>, uint> {
                 return key.clone()
             }
         }
-        unreachable!("RNG failed")
+        unreachable!("The random number generator failed.")
     }
 }
 
@@ -56,6 +57,7 @@ impl<T: Eq + Hash> Chain<T> {
             start: start, end: end
         }
     }
+    
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
         if tokens.len() == 0 { return self }
         let mut toks = Vec::new();
@@ -73,6 +75,7 @@ impl<T: Eq + Hash> Chain<T> {
         }
         self
     }
+
     pub fn generate(&self) -> Vec<Rc<T>> {
         let mut ret = Vec::new();
         let mut curs = self.start.clone();
