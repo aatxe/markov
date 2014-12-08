@@ -38,7 +38,7 @@ impl<T: PartialEq> State<T> {
     }
 }
 
-impl<T: Eq + Hash + Clone + PartialEq> States<T> for Vec<State<T>> {
+impl<T: Hash + Clone + PartialEq> States<T> for Vec<State<T>> {
     fn add(&mut self, token: T) {
         let state = State::new(token);
         match self.position_elem(&state) {
@@ -65,13 +65,13 @@ impl<T: Eq + Hash + Clone + PartialEq> States<T> for Vec<State<T>> {
     }
 }
 
-pub struct Chain<T: Eq + Hash + Clone + PartialEq> {
+pub struct Chain<T: Eq + Hash + Clone> {
     map: HashMap<T, Vec<State<T>>>,
     start: T,
     end: T,
 }
 
-impl<T: Eq + Hash + Clone + PartialEq> Chain<T> {
+impl<T: Eq + Hash + Clone> Chain<T> {
     pub fn new(start: T, end: T) -> Chain<T> {
         Chain { 
             map: {
