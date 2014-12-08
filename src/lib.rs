@@ -6,7 +6,7 @@
 //! ```
 //! use markov::Chain;
 //! 
-//! let chain = Chain::new("START".into_string(), "END".into_string());
+//! let mut chain = Chain::new("START".into_string(), "END".into_string());
 //! chain.feed_str("I like cats and I like dogs.");
 //! println!("{}", chain.generate_str());
 //! ```
@@ -71,6 +71,21 @@ impl<T: Eq + Hash> Chain<T> {
     pub fn generate(&self) -> Vec<Rc<T>> {
         let mut ret = Vec::new();
         let mut curs = self.start.clone();
+        while curs != self.end {
+            curs = self.map[curs].next();
+            ret.push(curs.clone());
+        }
+        ret.pop();
+        ret
+    }
+
+    /// Generates a collection of tokens from the chain, starting with the given token. This
+    /// operation is O(mn) where m is the length of the generated collection, and n is the number
+    /// of possible states from a given state.
+    pub fn generate_from_token(&self, token: T) -> Vec<Rc<T>> {
+        let token = Rc::new(token);
+        let mut ret = vec![token.clone()];
+        let mut curs = token;
         while curs != self.end {
             curs = self.map[curs].next();
             ret.push(curs.clone());
@@ -150,3 +165,17 @@ impl<T: Eq + Hash> States<T> for HashMap<Rc<T>, uint> {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::Chain;
+
+    #[test]
+    fn new() {
+        Chain::new("START".into_string(), "END".into_string());
+    }
+
+    #[test]
+    fn feed() {
+        let mut chain = Chain::new("START".into_string(), "END".into_string());
+    }
+}
