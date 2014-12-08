@@ -96,6 +96,12 @@ impl<T: Eq + Hash> Chain<T> {
 }
 
 impl Chain<String> {
+    /// Creates a new Chain intended specifically for strings. This uses the Unicode start of text
+    /// and end of text control characters as the starting and ending tokens for the chain.
+    pub fn for_strings() -> Chain<String> {
+        Chain::new("\u0002".into_string(), "\u0003".into_string())
+    }
+
     /// Feeds a string of text into the chain. This string should omit ending punctuation.
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
         self.feed(string.split_str(" ").map(|s| s.into_string()).collect())
@@ -119,6 +125,20 @@ impl Chain<String> {
     /// Generates a random string of text.
     pub fn generate_str(&self) -> String {
         let vec = self.generate();
+        let mut ret = String::new();
+        for s in vec.iter() {
+            ret.push_str(s[]);
+            ret.push_str(" ");
+        }
+        let len = ret.len();
+        ret.truncate(len - 1);
+        ret.push_str(".");
+        ret
+    }
+
+    /// Generates a random string of text starting with the desired token.
+    pub fn generate_str_from_token(&self, string: &str) -> String {
+        let vec = self.generate_from_token(string.into_string());
         let mut ret = String::new();
         for s in vec.iter() {
             ret.push_str(s[]);
@@ -171,11 +191,49 @@ mod test {
 
     #[test]
     fn new() {
-        Chain::new("START".into_string(), "END".into_string());
+        Chain::new(0u, 100u);
+        Chain::for_strings();
     }
 
     #[test]
     fn feed() {
-        let mut chain = Chain::new("START".into_string(), "END".into_string());
+        let mut chain = Chain::new(0u, 100u);
+        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+    }
+
+    #[test]
+    fn generate() {
+        let mut chain = Chain::new(0u, 100u);
+        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+        let v = chain.generate().map_in_place(|v| *v);
+        assert!([vec![3u, 5u, 10u], vec![3u, 5u, 12u], vec![5u, 10u], vec![5u, 12u]].contains(&v));
+    }
+
+    #[test]
+    fn generate_from_token() {
+        let mut chain = Chain::new(0u, 100u);
+        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+        let v = chain.generate_from_token(5u).map_in_place(|v| *v);
+        assert!([vec![5u, 10u], vec![5u, 12u]].contains(&v));
+    }
+
+    #[test]
+    fn feed_str() {
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats and dogs");
+    }
+
+    #[test]
+    fn generate_str() {
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats").feed_str("I hate cats");
+        assert!(["I like cats.", "I hate cats."].contains(&chain.generate_str()[]));
+    }
+
+    #[test]
+    fn generate_str_from_token() {
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats").feed_str("cats are cute");
+        assert!(["cats.", "cats are cute."].contains(&chain.generate_str_from_token("cats")[]));
     }
 }

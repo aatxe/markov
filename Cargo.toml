@@ -1,7 +1,7 @@
 [package]
 
 name = "markov"
-version = "0.0.3"
+version = "0.0.4"
 description = "A generic markov chain implementation in Rust."
 authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 license = "MPL-2.0"
