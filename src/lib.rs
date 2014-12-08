@@ -4,23 +4,23 @@ use std::hash::Hash;
 use std::io::{BufferedReader, File};
 use std::rand::{Rng, task_rng};
 
-trait States<T: Clone + PartialEq> {
+trait States<T: PartialEq> {
     fn add(&mut self, token: T);
     fn next(&self) -> T;
 }
 
-struct State<T: Clone + PartialEq> {
+struct State<T: PartialEq> {
     occurrences: uint,
     token: T
 }
 
-impl<T: Clone + PartialEq> PartialEq for State<T> {
+impl<T: PartialEq> PartialEq for State<T> {
     fn eq(&self, other: &State<T>) -> bool {
         self.token == other.token
     }
 }
 
-impl<T: Clone + PartialEq> State<T> {
+impl<T: PartialEq> State<T> {
     pub fn new(token: T) -> State<T> {
         State { token: token, occurrences: 1u }
     }
@@ -33,8 +33,8 @@ impl<T: Clone + PartialEq> State<T> {
         self.occurrences
     }
 
-    pub fn token(&self) -> T {
-        self.token.clone()
+    pub fn token(&self) -> &T {
+        &self.token
     }
 }
 
@@ -58,10 +58,10 @@ impl<T: Eq + Hash + Clone + PartialEq> States<T> for Vec<State<T>> {
         for state in self.iter() {
             sum += state.val();
             if sum >= cap {
-                return state.token()
+                return state.token().clone()
             }
         }
-        self.iter().next().unwrap().token()
+        self.iter().next().unwrap().token().clone()
     }
 }
 
