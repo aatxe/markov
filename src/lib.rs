@@ -6,9 +6,17 @@
 //! ```
 //! use markov::Chain;
 //! 
-//! let mut chain = Chain::new("START".into_string(), "END".into_string());
+//! let mut chain = Chain::for_strings();
 //! chain.feed_str("I like cats and I like dogs.");
 //! println!("{}", chain.generate_str());
+//! ```
+//!
+//! ```
+//! use markov::Chain;
+//!
+//! let mut chain = Chain::new(0u8, 255);
+//! chain.feed(vec![1u8, 2, 3, 5]).feed(vec![3u8, 9, 2]);
+//! println!("{}", chain.generate());
 //! ```
 #![experimental]
 #![feature(slicing_syntax)]
