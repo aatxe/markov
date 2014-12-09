@@ -10,6 +10,7 @@
 //! chain.feed_str("I like cats and I like dogs.");
 //! println!("{}", chain.generate_str());
 //! ```
+#![experimental]
 #![feature(slicing_syntax)]
 #![warn(missing_docs)]
 
