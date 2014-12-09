@@ -82,9 +82,11 @@ impl<T: Eq + Hash> Chain<T> {
 
     /// Generates a collection of tokens from the chain, starting with the given token. This
     /// operation is O(mn) where m is the length of the generated collection, and n is the number
-    /// of possible states from a given state.
+    /// of possible states from a given state. This returns an empty vector if the token is not
+    /// found.
     pub fn generate_from_token(&self, token: T) -> Vec<Rc<T>> {
         let token = Rc::new(token);
+        if !self.map.contains_key(&token) { return Vec::new() }
         let mut ret = vec![token.clone()];
         let mut curs = token;
         while curs != self.end {
@@ -137,7 +139,8 @@ impl Chain<String> {
         ret
     }
 
-    /// Generates a random string of text starting with the desired token.
+    /// Generates a random string of text starting with the desired token. This returns an empty
+    /// string if the token is not found.
     pub fn generate_str_from_token(&self, string: &str) -> String {
         let vec = self.generate_from_token(string.into_string());
         let mut ret = String::new();
@@ -146,8 +149,10 @@ impl Chain<String> {
             ret.push_str(" ");
         }
         let len = ret.len();
-        ret.truncate(len - 1);
-        ret.push_str(".");
+        if len > 0 { 
+            ret.truncate(len - 1);
+            ret.push_str(".");
+        }
         ret
     }
 }
@@ -219,6 +224,14 @@ mod test {
     }
 
     #[test]
+    fn generate_from_unfound_token() {
+        let mut chain = Chain::new(0u, 100u);
+        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+        let v = chain.generate_from_token(9u).map_in_place(|v| *v);
+        assert_eq!(v, vec![]);
+    }
+
+    #[test]
     fn feed_str() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats and dogs");
@@ -236,5 +249,12 @@ mod test {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("cats are cute");
         assert!(["cats.", "cats are cute."].contains(&chain.generate_str_from_token("cats")[]));
+    }
+
+    #[test]
+    fn generate_str_from_unfound_token() {
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats").feed_str("cats are cute");
+        assert_eq!(chain.generate_str_from_token("test"), "");
     }
 }
