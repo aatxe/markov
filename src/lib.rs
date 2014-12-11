@@ -143,7 +143,6 @@ impl Chain<String> {
         }
         let len = ret.len();
         ret.truncate(len - 1);
-        ret.push_str(".");
         ret
     }
 
@@ -159,7 +158,6 @@ impl Chain<String> {
         let len = ret.len();
         if len > 0 { 
             ret.truncate(len - 1);
-            ret.push_str(".");
         }
         ret
     }
