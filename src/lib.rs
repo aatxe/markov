@@ -54,6 +54,13 @@ impl<T: Eq + Hash> Chain<T> {
         }
     }
 
+    /// Determines whether or not the chain is empty. A chain is considered empty if nothing has
+    /// been fed into it.
+    pub fn is_empty(&self) -> bool {
+        self.map[self.start.clone()].is_empty()
+    }
+
+
     /// Feeds the chain a collection of tokens. This operation is O(n) where n is the number of
     /// tokens to be fed into the chain.
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
@@ -208,6 +215,14 @@ mod test {
     }
 
     #[test]
+    fn is_empty() {
+        let mut chain = Chain::new(0u, 100u);
+        assert!(chain.is_empty());
+        chain.feed(vec![1u, 2u, 3u]);
+        assert!(!chain.is_empty());
+    }
+
+    #[test]
     fn feed() {
         let mut chain = Chain::new(0u, 100u);
         chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
@@ -247,14 +262,14 @@ mod test {
     fn generate_str() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("I hate cats");
-        assert!(["I like cats.", "I hate cats."].contains(&chain.generate_str()[]));
+        assert!(["I like cats", "I hate cats"].contains(&chain.generate_str()[]));
     }
 
     #[test]
     fn generate_str_from_token() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("cats are cute");
-        assert!(["cats.", "cats are cute."].contains(&chain.generate_str_from_token("cats")[]));
+        assert!(["cats", "cats are cute"].contains(&chain.generate_str_from_token("cats")[]));
     }
 
     #[test]
