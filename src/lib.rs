@@ -47,7 +47,6 @@ impl<T: Eq + Hash> Chain<T> {
             map: {
                 let mut map = HashMap::new();
                 map.insert(start.clone(), HashMap::new());
-                map.insert(end.clone(), HashMap::new());
                 map
             },
             start: start, end: end
@@ -141,7 +140,7 @@ impl Chain<String> {
     }
 
     /// Generates a random string of text.
-    pub fn generate_str(&self) -> String {
+    pub fn generate_str(&self) -> String { 
         let vec = self.generate();
         let mut ret = String::new();
         for s in vec.iter() {
