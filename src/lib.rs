@@ -119,14 +119,13 @@ impl Chain<String> {
         Chain::new("\u0002".into_string(), "\u0003".into_string())
     }
 
-    /// Feeds a string of text into the chain. This string should omit ending punctuation.
+    /// Feeds a string of text into the chain.     
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
         self.feed(string.split_str(" ").map(|s| s.into_string()).collect())
     }
 
     /// Feeds a properly formatted file into the chain. This file should be formatted such that
-    /// each line is a new sentence. Periods, exclamation points, and question marks should be 
-    /// excluded from the ends of each line.
+    /// each line is a new sentence. Punctuation may be included if it is desired.
     pub fn feed_file(&mut self, path: &Path) -> &mut Chain<String> {
         let mut reader = BufferedReader::new(File::open(path));
         for line in reader.lines() {
