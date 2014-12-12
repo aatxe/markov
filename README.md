@@ -5,6 +5,7 @@ Documentation can be found online [here](http://www.rust-ci.org/aaronweiss74/mar
 
 ## Examples ##
 
+With Strings: 
 ```rust
 extern crate markov;
 
@@ -17,6 +18,7 @@ fn main() {
 }
 ```
 
+With integers:
 ```rust
 extern crate markov;
 
@@ -28,3 +30,9 @@ fn main() {
     println!("{}", chain.generate());
 }
 ```
+
+## Contributing ##
+Contributions to this library would be immensely appreciated. As this project is public domain, 
+all prospective contributors must 
+[sign the Contributor License Agreement](https://www.clahub.com/agreements/aaronweiss74/markov), a 
+public domain dedication.
