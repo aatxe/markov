@@ -116,7 +116,7 @@ impl Chain<String> {
     /// Creates a new Chain intended specifically for strings. This uses the Unicode start of text
     /// and end of text control characters as the starting and ending tokens for the chain.
     pub fn for_strings() -> Chain<String> {
-        Chain::new("\u0002".into_string(), "\u0003".into_string())
+        Chain::new("\u{0002}".into_string(), "\u{0003}".into_string())
     }
 
     /// Feeds a string of text into the chain.     
