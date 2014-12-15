@@ -75,7 +75,7 @@ impl<T: Eq + Hash> Chain<T> {
         }));
         toks.push(self.end.clone());
         for p in toks.windows(2) {
-            self.map[p[0]].add(p[1].clone());
+            (&mut self.map[p[0]]).add(p[1].clone());
         }
         self
     }
