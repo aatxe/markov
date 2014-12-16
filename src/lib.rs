@@ -40,8 +40,6 @@ pub struct Chain<T: Eq + Hash> {
 impl<T: Eq + Hash> Chain<T> {
     /// Constructs a new Markov chain using the given tokens as the marked starting and ending
     /// points for generation.
-    ///
-    /// I'm trying to test something: I referrenced it online.
     pub fn new(start: T, end: T) -> Chain<T> {
         let start = Rc::new(start);
         let end = Rc::new(end);
