@@ -22,15 +22,20 @@
 #![feature(slicing_syntax)]
 #![warn(missing_docs)]
 
+extern crate serialize;
+
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::hash::Hash;
-use std::io::{BufferedReader, File};
+use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::rand::{Rng, task_rng};
 use std::rc::Rc;
+use serialize::{Decodable, Encodable};
+use serialize::json::{Decoder, DecoderError, Encoder, decode, encode};
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
 /// uses HashMaps internally, and so Eq and Hash are both required.
+#[deriving(Encodable, Decodable, PartialEq, Show)]
 pub struct Chain<T: Eq + Hash> {
     map: HashMap<Rc<T>, HashMap<Rc<T>, uint>>,
     start: Rc<T>,
@@ -109,6 +114,37 @@ impl<T: Eq + Hash> Chain<T> {
         }
         ret.pop();
         ret
+    }
+}
+
+impl<T: Decodable<Decoder, DecoderError> + Eq + Hash> Chain<T> {
+    /// Loads a chain from a JSON file at the specified path.
+    pub fn load(path: &Path) -> IoResult<Chain<T>> {
+        let mut file = try!(File::open(path));
+        let data = try!(file.read_to_string());
+        decode(data[]).map_err(|e| IoError {
+            kind: InvalidInput,
+            desc: "Decoder error",
+            detail: Some(e.to_string()),
+        })
+    }
+
+    /// Loads a chain from a JSON file using a string path.
+    pub fn load_utf8(path: &str) -> IoResult<Chain<T>> {
+        Chain::load(&Path::new(path))
+    }
+}
+
+impl<'a, T: Encodable<Encoder<'a>, IoError> + Eq + Hash> Chain<T> {
+    /// Saves a chain to a JSON file at the specified path.
+    pub fn save(&self, path: &Path) -> IoResult<()> {
+        let mut f = File::create(path);
+        f.write_str(encode(self)[])
+    }
+
+    /// Saves a chain to a JSON file using a string path.
+    pub fn save_utf8(&self, path: &str) -> IoResult<()> {
+        self.save(&Path::new(path))
     }
 }
 
@@ -275,5 +311,21 @@ mod test {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("cats are cute");
         assert_eq!(chain.generate_str_from_token("test"), "");
+    }
+
+    #[test]
+    fn save() {
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats and I like dogs");
+        chain.save_utf8("save.json").unwrap();
+    }
+
+    #[test]
+    fn load() {
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats and I like dogs");
+        chain.save_utf8("load.json").unwrap();
+        let other_chain: Chain<String> = Chain::load_utf8("load.json").unwrap();
+        assert_eq!(other_chain, chain);
     }
 }
