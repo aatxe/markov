@@ -40,14 +40,8 @@ fn markov_gen(args: Vec<String>) -> Vec<String> {
             chain.feed_file(&Path::new(arg[]));
         }
     }
-    if chain.is_empty() {
-        panic!("No files were fed into the chain.");
-    }
-    let mut ret = Vec::new();
-    for _ in range(0u, count) {
-        ret.push(chain.generate_str());
-    }
-    ret
+    if chain.is_empty() { panic!("No files were fed into the chain.") }
+    chain.str_iter_for(count).collect()
 }
 
 #[cfg(test)]

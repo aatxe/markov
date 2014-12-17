@@ -345,6 +345,20 @@ mod test {
     }
 
     #[test]
+    fn iter() {    
+        let mut chain = Chain::new(0u, 100u);
+        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+        assert_eq!(chain.iter().size_hint().1, None);
+    }
+
+    #[test]
+    fn iter_for() {   
+        let mut chain = Chain::new(0u, 100u);
+        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+        assert_eq!(chain.iter_for(5).collect::<Vec<_>>().len(), 5);
+    }
+
+    #[test]
     fn feed_str() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats and dogs");
@@ -370,6 +384,21 @@ mod test {
         chain.feed_str("I like cats").feed_str("cats are cute");
         assert_eq!(chain.generate_str_from_token("test"), "");
     }
+    
+    #[test]
+    fn str_iter() {    
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats and I like dogs");
+        assert_eq!(chain.str_iter().size_hint().1, None);
+    }
+
+    #[test]
+    fn str_iter_for() {   
+        let mut chain = Chain::for_strings();
+        chain.feed_str("I like cats and I like dogs");
+        assert_eq!(chain.str_iter_for(5).collect::<Vec<_>>().len(), 5);
+    }
+
 
     #[test]
     fn save() {
