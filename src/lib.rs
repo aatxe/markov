@@ -28,6 +28,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::hash::Hash;
 use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
+use std::iter::Map;
 use std::rand::{Rng, task_rng};
 use std::rc::Rc;
 use serialize::{Decodable, Encodable};
@@ -115,6 +116,16 @@ impl<T: Eq + Hash> Chain<T> {
         ret.pop();
         ret
     }
+
+    /// Produces an infinite iterator of generated token collections.
+    pub fn iter(&self) -> InfiniteChainIterator<T> {
+        InfiniteChainIterator { chain: self }
+    }
+
+    /// Produces an iterator for the specified number of generated token collections.
+    pub fn iter_for(&self, size: uint) -> SizedChainIterator<T> {
+        SizedChainIterator { chain: self, size: size }
+    }
 }
 
 impl<T: Decodable<Decoder, DecoderError> + Eq + Hash> Chain<T> {
@@ -174,23 +185,8 @@ impl Chain<String> {
         self
     }
 
-    /// Generates a random string of text.
-    pub fn generate_str(&self) -> String { 
-        let vec = self.generate();
-        let mut ret = String::new();
-        for s in vec.iter() {
-            ret.push_str(s[]);
-            ret.push_str(" ");
-        }
-        let len = ret.len();
-        ret.truncate(len - 1);
-        ret
-    }
-
-    /// Generates a random string of text starting with the desired token. This returns an empty
-    /// string if the token is not found.
-    pub fn generate_str_from_token(&self, string: &str) -> String {
-        let vec = self.generate_from_token(string.into_string());
+    /// Converts the output of generate(...) on a String chain to a single String.
+    fn vec_to_string(vec: Vec<Rc<String>>) -> String {
         let mut ret = String::new();
         for s in vec.iter() {
             ret.push_str(s[]);
@@ -201,6 +197,68 @@ impl Chain<String> {
             ret.truncate(len - 1);
         }
         ret
+    }
+
+    /// Generates a random string of text.
+    pub fn generate_str(&self) -> String { 
+        Chain::vec_to_string(self.generate())    
+    }
+
+    /// Generates a random string of text starting with the desired token. This returns an empty
+    /// string if the token is not found.
+    pub fn generate_str_from_token(&self, string: &str) -> String {
+        Chain::vec_to_string(self.generate_from_token(string.into_string()))
+    }
+
+    /// Produces an infinite iterator of generated strings.
+    pub fn str_iter(&self) -> InfiniteChainStringIterator {
+        self.iter().map(Chain::vec_to_string) 
+    }
+
+    /// Produces a sized iterator of generated strings.
+    pub fn str_iter_for(&self, size: uint) -> SizedChainStringIterator {
+        self.iter_for(size).map(Chain::vec_to_string)
+    }
+}
+
+/// A sized iterator over a Markov chain of strings.
+pub type SizedChainStringIterator<'a> =
+Map<Vec<Rc<String>>, String, SizedChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
+
+/// A sized iterator over a Markov chain.
+pub struct SizedChainIterator<'a, T: Eq + Hash + 'a> {
+    chain: &'a Chain<T>,
+    size: uint,
+}
+
+impl<'a, T: Eq + Hash + 'a> Iterator<Vec<Rc<T>>> for SizedChainIterator<'a, T> {
+    fn next(&mut self) -> Option<Vec<Rc<T>>> {
+        if self.size > 0 {
+            self.size -= 1;
+            Some(self.chain.generate())
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (uint, Option<uint>) { 
+        (self.size, Some(self.size)) 
+    }
+}
+
+
+/// An infinite iterator over a Markov chain of strings.
+pub type InfiniteChainStringIterator<'a> = 
+Map<Vec<Rc<String>>, String, InfiniteChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
+
+/// An infinite iterator over a Markov chain.
+pub struct InfiniteChainIterator<'a, T: Eq + Hash + 'a> {
+    chain: &'a Chain<T>
+}
+
+impl<'a, T: Eq + Hash + 'a> Iterator<Vec<Rc<T>>> for InfiniteChainIterator<'a, T> {
+    fn next(&mut self) -> Option<Vec<Rc<T>>> {
+        Some(self.chain.generate())
     }
 }
 
