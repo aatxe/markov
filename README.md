@@ -31,6 +31,21 @@ fn main() {
 }
 ```
 
+Chains have iterators (both infinite and sized!):
+```rust
+extern crate markov;
+
+use markov::Chain;
+
+fn main() {
+    let mut chain = Chain::for_strings();
+    chain.feed_str("I like cats and I like dogs.");
+    for line in chain.iter_for(5) {
+        println!("{}", line);
+    }
+}
+```
+
 ## Contributing ##
 Contributions to this library would be immensely appreciated. As this project is public domain, 
 all prospective contributors must 
