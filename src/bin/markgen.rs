@@ -15,21 +15,21 @@ fn main() {
 /// to be generated. This number must be a positive, non-zero integer. 
 ///
 /// Some valid usages of this function:
-/// `markov_gen(vec!["test".into_string()])`
-/// `markov_gen(vec!["test".into_string(), "-n".into_string(), "3".into_string()])`
-/// `markov_gen(vec!["-n".into_string(), "3".into_string(), "test".into_string()])`
+/// `markov_gen(vec!["test".to_owned()])`
+/// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "3".to_owned()])`
+/// `markov_gen(vec!["-n".to_owned(), "3".to_owned(), "test".to_owned()])`
 ///
 /// Some invalid usages of this function:
-/// `markov_gen(vec!["-n".into_string(), "3".into_string()])`
-/// `markov_gen(vec!["test".into_string(), "-n".into_string(), "0".into_string()])`
-/// `markov_gen(vec!["test".into_string(), "-n".into_string(), "test".into_string()])`
+/// `markov_gen(vec!["-n".to_owned(), "3".to_owned()])`
+/// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "0".to_owned()])`
+/// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "test".to_owned()])`
 fn markov_gen(args: Vec<String>) -> Vec<String> {
     let mut chain = Chain::for_strings();
     let mut expecting_num = false;
     let mut count = 1u;
     for arg in args.iter() {
         if expecting_num {
-            match from_str(arg[]) {
+            match arg.parse() {
                 Some(n) if n > 0u => count = n,
                 _ => panic!("Expected positive integer argument to -n, found {}.", arg[])
             }
@@ -47,41 +47,42 @@ fn markov_gen(args: Vec<String>) -> Vec<String> {
 #[cfg(test)]
 mod test {
     use super::markov_gen;
-    
+    use std::borrow::ToOwned;
+
     #[test]
     fn gen_default() {
-        assert_eq!(markov_gen(vec!["test".into_string()]).len(), 1)
+        assert_eq!(markov_gen(vec!["test".to_owned()]).len(), 1)
     }
 
     #[test]
     fn gen_number_after() {
         assert_eq!(markov_gen(
-            vec!["test".into_string(), "-n".into_string(), "3".into_string()]
+            vec!["test".to_owned(), "-n".to_owned(), "3".to_owned()]
         ).len(), 3)
     }
 
     #[test]
     fn gen_before_number() {
         assert_eq!(markov_gen(
-            vec!["-n".into_string(), "3".into_string(), "test".into_string()]
+            vec!["-n".to_owned(), "3".to_owned(), "test".to_owned()]
         ).len(), 3)
     }
 
     #[test]
     #[should_fail(message = "No files were fed into the chain.")]
     fn gen_invalid_no_files() {
-        markov_gen(vec!["-n".into_string(), "3".into_string()]);
+        markov_gen(vec!["-n".to_owned(), "3".to_owned()]);
     }
 
     #[test]
     #[should_fail(message = "Expected positive integer argument to -n, found 0.")]
     fn gen_invalid_n_arg_zero() {
-        markov_gen(vec!["test".into_string(), "-n".into_string(), "0".into_string()]);
+        markov_gen(vec!["test".to_owned(), "-n".to_owned(), "0".to_owned()]);
     }
 
     #[test]
     #[should_fail(message = "Expected positive integer argument to -n, found test.")]
     fn gen_invalid_n_arg_string() {
-        markov_gen(vec!["test".into_string(), "-n".into_string(), "test".into_string()]);
+        markov_gen(vec!["test".to_owned(), "-n".to_owned(), "test".to_owned()]);
     }
 }

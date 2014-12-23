@@ -9,3 +9,7 @@ keywords = ["markov", "chain", "probability"]
 documentation = "http://www.rust-ci.org/aatxe/markov/doc/markov/"
 repository = "https://github.com/aatxe/markov"
 readme = "README.md"
+
+[dependencies.rustc-serialize]
+
+rustc-serialize = "~0.1.4"

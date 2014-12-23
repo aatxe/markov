@@ -22,8 +22,9 @@
 #![feature(slicing_syntax)]
 #![warn(missing_docs)]
 
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 
+use std::borrow::ToOwned;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::hash::Hash;
@@ -31,12 +32,12 @@ use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::iter::Map;
 use std::rand::{Rng, task_rng};
 use std::rc::Rc;
-use serialize::{Decodable, Encodable};
-use serialize::json::{Decoder, DecoderError, Encoder, decode, encode};
+use rustc_serialize::{Decodable, Encodable};
+use rustc_serialize::json::{Decoder, DecoderError, Encoder, decode, encode};
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
 /// uses HashMaps internally, and so Eq and Hash are both required.
-#[deriving(Encodable, Decodable, PartialEq, Show)]
+#[deriving(RustcEncodable, RustcDecodable, PartialEq, Show)]
 pub struct Chain<T: Eq + Hash> {
     map: HashMap<Rc<T>, HashMap<Rc<T>, uint>>,
     start: Rc<T>,
@@ -163,12 +164,12 @@ impl Chain<String> {
     /// Creates a new Chain intended specifically for strings. This uses the Unicode start of text
     /// and end of text control characters as the starting and ending tokens for the chain.
     pub fn for_strings() -> Chain<String> {
-        Chain::new("\u{0002}".into_string(), "\u{0003}".into_string())
+        Chain::new("\u{0002}".to_owned(), "\u{0003}".to_owned())
     }
 
     /// Feeds a string of text into the chain.     
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
-        self.feed(string.split_str(" ").map(|s| s.into_string()).collect())
+        self.feed(string.split_str(" ").map(|s| s.to_owned()).collect())
     }
 
     /// Feeds a properly formatted file into the chain. This file should be formatted such that
@@ -180,7 +181,7 @@ impl Chain<String> {
             let words: Vec<_> = line.split([' ', '\t', '\n', '\r'][])
                                     .filter(|word| !word.is_empty())
                                     .collect();
-            self.feed(words.iter().map(|s| s.into_string()).collect());
+            self.feed(words.iter().map(|&s| s.to_owned()).collect());
         }
         self
     }
@@ -207,19 +208,23 @@ impl Chain<String> {
     /// Generates a random string of text starting with the desired token. This returns an empty
     /// string if the token is not found.
     pub fn generate_str_from_token(&self, string: &str) -> String {
-        Chain::vec_to_string(self.generate_from_token(string.into_string()))
+        Chain::vec_to_string(self.generate_from_token(string.to_owned()))
     }
 
     /// Produces an infinite iterator of generated strings.
     pub fn str_iter(&self) -> InfiniteChainStringIterator {
-        self.iter().map(Chain::vec_to_string) 
+        let vec_to_string: fn(Vec<Rc<String>>) -> String = Chain::vec_to_string;
+        self.iter().map(vec_to_string) 
     }
 
     /// Produces a sized iterator of generated strings.
     pub fn str_iter_for(&self, size: uint) -> SizedChainStringIterator {
-        self.iter_for(size).map(Chain::vec_to_string)
+        let vec_to_string: fn(Vec<Rc<String>>) -> String = Chain::vec_to_string;
+        self.iter_for(size).map(vec_to_string)
     }
 }
+
+// Map<Vec<Rc<String>>, String, InfiniteChainIterator<'_, String>, fn(Vec<Rc<String>>) -> String>
 
 /// A sized iterator over a Markov chain of strings.
 pub type SizedChainStringIterator<'a> =
