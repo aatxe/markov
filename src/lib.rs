@@ -224,8 +224,6 @@ impl Chain<String> {
     }
 }
 
-// Map<Vec<Rc<String>>, String, InfiniteChainIterator<'_, String>, fn(Vec<Rc<String>>) -> String>
-
 /// A sized iterator over a Markov chain of strings.
 pub type SizedChainStringIterator<'a> =
 Map<Vec<Rc<String>>, String, SizedChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
