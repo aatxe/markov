@@ -30,7 +30,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::hash::Hash;
 use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::iter::Map;
-use std::rand::{Rng, task_rng};
+use std::rand::{Rng, thread_rng};
 use std::rc::Rc;
 use rustc_serialize::{Decodable, Encodable};
 use rustc_serialize::json::{Decoder, DecoderError, Encoder, decode, encode};
@@ -286,7 +286,7 @@ impl<T: Eq + Hash> States<T> for HashMap<Rc<T>, uint> {
         for &value in self.values() {
             sum += value;
         }
-        let mut rng = task_rng();
+        let mut rng = thread_rng();
         let cap = rng.gen_range(0, sum);
         sum = 0;
         for (key, &value) in self.iter() {
