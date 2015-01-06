@@ -19,7 +19,7 @@
 //! println!("{}", chain.generate());
 //! ```
 #![experimental]
-#![feature(associated_types, slicing_syntax, old_orphan_check)]
+#![feature(associated_types, slicing_syntax)]
 #![warn(missing_docs)]
 
 extern crate "rustc-serialize" as rustc_serialize;
@@ -27,14 +27,13 @@ extern crate "rustc-serialize" as rustc_serialize;
 use std::borrow::ToOwned;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::fmt::Error;
 use std::hash::Hash;
 use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::iter::Map;
 use std::rand::{Rng, thread_rng};
 use std::rc::Rc;
 use rustc_serialize::{Decodable, Encodable};
-use rustc_serialize::json::{Decoder, DecoderError, Encoder, decode, encode};
+use rustc_serialize::json::{decode, encode};
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
 /// uses HashMaps internally, and so Eq and Hash are both required.
@@ -130,7 +129,7 @@ impl<T> Chain<T> where T: Eq + Hash {
     }
 }
 
-impl<T> Chain<T> where T: Decodable<Decoder, DecoderError> + Eq + Hash {
+impl<T> Chain<T> where T: Decodable + Eq + Hash {
     /// Loads a chain from a JSON file at the specified path.
     pub fn load(path: &Path) -> IoResult<Chain<T>> {
         let mut file = try!(File::open(path));
@@ -148,7 +147,7 @@ impl<T> Chain<T> where T: Decodable<Decoder, DecoderError> + Eq + Hash {
     }
 }
 
-impl<T> Chain<T> where T: for<'a> Encodable<Encoder<'a>, Error> + Eq + Hash {
+impl<T> Chain<T> where T: for<'a> Encodable + Eq + Hash {
     /// Saves a chain to a JSON file at the specified path.
     pub fn save(&self, path: &Path) -> IoResult<()> {
         let mut f = File::create(path);
