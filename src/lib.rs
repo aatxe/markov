@@ -19,7 +19,7 @@
 //! println!("{}", chain.generate());
 //! ```
 #![experimental]
-#![feature(slicing_syntax)]
+#![feature(associated_types, slicing_syntax, old_orphan_check)]
 #![warn(missing_docs)]
 
 extern crate "rustc-serialize" as rustc_serialize;
@@ -27,6 +27,7 @@ extern crate "rustc-serialize" as rustc_serialize;
 use std::borrow::ToOwned;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::fmt::Error;
 use std::hash::Hash;
 use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::iter::Map;
@@ -37,14 +38,14 @@ use rustc_serialize::json::{Decoder, DecoderError, Encoder, decode, encode};
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
 /// uses HashMaps internally, and so Eq and Hash are both required.
-#[deriving(RustcEncodable, RustcDecodable, PartialEq, Show)]
-pub struct Chain<T: Eq + Hash> {
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Show)]
+pub struct Chain<T> where T: Eq + Hash {
     map: HashMap<Rc<T>, HashMap<Rc<T>, uint>>,
     start: Rc<T>,
     end: Rc<T>,
 }
 
-impl<T: Eq + Hash> Chain<T> {
+impl<T> Chain<T> where T: Eq + Hash {
     /// Constructs a new Markov chain using the given tokens as the marked starting and ending
     /// points for generation.
     pub fn new(start: T, end: T) -> Chain<T> {
@@ -129,7 +130,7 @@ impl<T: Eq + Hash> Chain<T> {
     }
 }
 
-impl<T: Decodable<Decoder, DecoderError> + Eq + Hash> Chain<T> {
+impl<T> Chain<T> where T: Decodable<Decoder, DecoderError> + Eq + Hash {
     /// Loads a chain from a JSON file at the specified path.
     pub fn load(path: &Path) -> IoResult<Chain<T>> {
         let mut file = try!(File::open(path));
@@ -147,7 +148,7 @@ impl<T: Decodable<Decoder, DecoderError> + Eq + Hash> Chain<T> {
     }
 }
 
-impl<'a, T: Encodable<Encoder<'a>, IoError> + Eq + Hash> Chain<T> {
+impl<T> Chain<T> where T: for<'a> Encodable<Encoder<'a>, Error> + Eq + Hash {
     /// Saves a chain to a JSON file at the specified path.
     pub fn save(&self, path: &Path) -> IoResult<()> {
         let mut f = File::create(path);
@@ -234,7 +235,8 @@ pub struct SizedChainIterator<'a, T: Eq + Hash + 'a> {
     size: uint,
 }
 
-impl<'a, T: Eq + Hash + 'a> Iterator<Vec<Rc<T>>> for SizedChainIterator<'a, T> {
+impl<'a, T> Iterator for SizedChainIterator<'a, T> where T: Eq + Hash + 'a {
+    type Item = Vec<Rc<T>>;
     fn next(&mut self) -> Option<Vec<Rc<T>>> {
         if self.size > 0 {
             self.size -= 1;
@@ -259,7 +261,8 @@ pub struct InfiniteChainIterator<'a, T: Eq + Hash + 'a> {
     chain: &'a Chain<T>
 }
 
-impl<'a, T: Eq + Hash + 'a> Iterator<Vec<Rc<T>>> for InfiniteChainIterator<'a, T> {
+impl<'a, T> Iterator for InfiniteChainIterator<'a, T> where T: Eq + Hash + 'a {
+    type Item = Vec<Rc<T>>;
     fn next(&mut self) -> Option<Vec<Rc<T>>> {
         Some(self.chain.generate())
     }
@@ -273,11 +276,11 @@ trait States<T: PartialEq> {
     fn next(&self) -> Rc<T>;
 }
 
-impl<T: Eq + Hash> States<T> for HashMap<Rc<T>, uint> {
+impl<T> States<T> for HashMap<Rc<T>, uint> where T: Eq + Hash {
     fn add(&mut self, token: Rc<T>) {
-        match self.entry(token) {
+        match self.entry(&token) {
             Occupied(mut e) => *e.get_mut() += 1,
-            Vacant(e) => { e.set(1); },
+            Vacant(e) => { e.insert(1); },
         }
     }
 
