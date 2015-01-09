@@ -19,7 +19,7 @@
 //! println!("{}", chain.generate());
 //! ```
 #![experimental]
-#![feature(associated_types, slicing_syntax)]
+#![feature(slicing_syntax)]
 #![warn(missing_docs)]
 
 extern crate "rustc-serialize" as rustc_serialize;
