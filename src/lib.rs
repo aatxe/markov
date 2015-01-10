@@ -16,17 +16,20 @@
 //!
 //! let mut chain = Chain::new(0u8, 255);
 //! chain.feed(vec![1u8, 2, 3, 5]).feed(vec![3u8, 9, 2]);
-//! println!("{}", chain.generate());
+//! println!("{:?}", chain.generate());
 //! ```
 #![experimental]
 #![feature(slicing_syntax)]
+#![allow(unstable)]
 #![warn(missing_docs)]
 
 extern crate "rustc-serialize" as rustc_serialize;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
+use std::collections::hash_map::Hasher;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::error::Error;
 use std::hash::Hash;
 use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::iter::Map;
@@ -35,16 +38,20 @@ use std::rc::Rc;
 use rustc_serialize::{Decodable, Encodable};
 use rustc_serialize::json::{decode, encode};
 
+/// The definition of all types that can be used in a Chain.
+pub trait Chainable: Eq + Hash<Hasher> {}
+impl<T> Chainable for T where T: Eq + Hash<Hasher> {}
+
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
 /// uses HashMaps internally, and so Eq and Hash are both required.
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Show)]
-pub struct Chain<T> where T: Eq + Hash {
-    map: HashMap<Rc<T>, HashMap<Rc<T>, uint>>,
+pub struct Chain<T> where T: Chainable {
+    map: HashMap<Rc<T>, HashMap<Rc<T>, usize>>,
     start: Rc<T>,
     end: Rc<T>,
 }
 
-impl<T> Chain<T> where T: Eq + Hash {
+impl<T> Chain<T> where T: Chainable {
     /// Constructs a new Markov chain using the given tokens as the marked starting and ending
     /// points for generation.
     pub fn new(start: T, end: T) -> Chain<T> {
@@ -124,20 +131,20 @@ impl<T> Chain<T> where T: Eq + Hash {
     }
 
     /// Produces an iterator for the specified number of generated token collections.
-    pub fn iter_for(&self, size: uint) -> SizedChainIterator<T> {
+    pub fn iter_for(&self, size: usize) -> SizedChainIterator<T> {
         SizedChainIterator { chain: self, size: size }
     }
 }
 
-impl<T> Chain<T> where T: Decodable + Eq + Hash {
+impl<T> Chain<T> where T: Decodable + Chainable {
     /// Loads a chain from a JSON file at the specified path.
     pub fn load(path: &Path) -> IoResult<Chain<T>> {
         let mut file = try!(File::open(path));
         let data = try!(file.read_to_string());
-        decode(data[]).map_err(|e| IoError {
+        decode(&data[]).map_err(|e| IoError {
             kind: InvalidInput,
             desc: "Decoder error",
-            detail: Some(e.to_string()),
+            detail: e.detail(),
         })
     }
 
@@ -147,11 +154,11 @@ impl<T> Chain<T> where T: Decodable + Eq + Hash {
     }
 }
 
-impl<T> Chain<T> where T: for<'a> Encodable + Eq + Hash {
+impl<T> Chain<T> where T: for<'a> Encodable + Chainable {
     /// Saves a chain to a JSON file at the specified path.
     pub fn save(&self, path: &Path) -> IoResult<()> {
         let mut f = File::create(path);
-        f.write_str(encode(self)[])
+        f.write_str(&encode(self)[])
     }
 
     /// Saves a chain to a JSON file using a string path.
@@ -178,7 +185,7 @@ impl Chain<String> {
         let mut reader = BufferedReader::new(File::open(path));
         for line in reader.lines() {
             let line = line.unwrap();
-            let words: Vec<_> = line.split([' ', '\t', '\n', '\r'][])
+            let words: Vec<_> = line.split(&[' ', '\t', '\n', '\r'][])
                                     .filter(|word| !word.is_empty())
                                     .collect();
             self.feed(words.iter().map(|&s| s.to_owned()).collect());
@@ -190,7 +197,7 @@ impl Chain<String> {
     fn vec_to_string(vec: Vec<Rc<String>>) -> String {
         let mut ret = String::new();
         for s in vec.iter() {
-            ret.push_str(s[]);
+            ret.push_str(&s[]);
             ret.push_str(" ");
         }
         let len = ret.len();
@@ -218,7 +225,7 @@ impl Chain<String> {
     }
 
     /// Produces a sized iterator of generated strings.
-    pub fn str_iter_for(&self, size: uint) -> SizedChainStringIterator {
+    pub fn str_iter_for(&self, size: usize) -> SizedChainStringIterator {
         let vec_to_string: fn(Vec<Rc<String>>) -> String = Chain::vec_to_string;
         self.iter_for(size).map(vec_to_string)
     }
@@ -229,12 +236,12 @@ pub type SizedChainStringIterator<'a> =
 Map<Vec<Rc<String>>, String, SizedChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
 
 /// A sized iterator over a Markov chain.
-pub struct SizedChainIterator<'a, T: Eq + Hash + 'a> {
+pub struct SizedChainIterator<'a, T: Chainable + 'a> {
     chain: &'a Chain<T>,
-    size: uint,
+    size: usize,
 }
 
-impl<'a, T> Iterator for SizedChainIterator<'a, T> where T: Eq + Hash + 'a {
+impl<'a, T> Iterator for SizedChainIterator<'a, T> where T: Chainable + 'a {
     type Item = Vec<Rc<T>>;
     fn next(&mut self) -> Option<Vec<Rc<T>>> {
         if self.size > 0 {
@@ -245,7 +252,7 @@ impl<'a, T> Iterator for SizedChainIterator<'a, T> where T: Eq + Hash + 'a {
         }
     }
 
-    fn size_hint(&self) -> (uint, Option<uint>) { 
+    fn size_hint(&self) -> (usize, Option<usize>) { 
         (self.size, Some(self.size)) 
     }
 }
@@ -256,11 +263,11 @@ pub type InfiniteChainStringIterator<'a> =
 Map<Vec<Rc<String>>, String, InfiniteChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
 
 /// An infinite iterator over a Markov chain.
-pub struct InfiniteChainIterator<'a, T: Eq + Hash + 'a> {
+pub struct InfiniteChainIterator<'a, T: Chainable + 'a> {
     chain: &'a Chain<T>
 }
 
-impl<'a, T> Iterator for InfiniteChainIterator<'a, T> where T: Eq + Hash + 'a {
+impl<'a, T> Iterator for InfiniteChainIterator<'a, T> where T: Chainable + 'a {
     type Item = Vec<Rc<T>>;
     fn next(&mut self) -> Option<Vec<Rc<T>>> {
         Some(self.chain.generate())
@@ -275,9 +282,9 @@ trait States<T: PartialEq> {
     fn next(&self) -> Rc<T>;
 }
 
-impl<T> States<T> for HashMap<Rc<T>, uint> where T: Eq + Hash {
+impl<T> States<T> for HashMap<Rc<T>, usize> where T: Chainable {
     fn add(&mut self, token: Rc<T>) {
-        match self.entry(&token) {
+        match self.entry(token) {
             Occupied(mut e) => *e.get_mut() += 1,
             Vacant(e) => { e.insert(1); },
         }
@@ -307,59 +314,59 @@ mod test {
 
     #[test]
     fn new() {
-        Chain::new(0u, 100u);
+        Chain::new(0u8, 100);
         Chain::for_strings();
     }
 
     #[test]
     fn is_empty() {
-        let mut chain = Chain::new(0u, 100u);
+        let mut chain = Chain::new(0u8, 100);
         assert!(chain.is_empty());
-        chain.feed(vec![1u, 2u, 3u]);
+        chain.feed(vec![1, 2, 3]);
         assert!(!chain.is_empty());
     }
 
     #[test]
     fn feed() {
-        let mut chain = Chain::new(0u, 100u);
-        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+        let mut chain = Chain::new(0u8, 100);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
     }
 
     #[test]
     fn generate() {
-        let mut chain = Chain::new(0u, 100u);
-        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
-        let v = chain.generate().map_in_place(|v| *v);
-        assert!([vec![3u, 5u, 10u], vec![3u, 5u, 12u], vec![5u, 10u], vec![5u, 12u]].contains(&v));
+        let mut chain = Chain::new(0u8, 100);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+        let v = chain.generate().into_iter().map(|v| *v).collect();
+        assert!([vec![3, 5, 10], vec![3, 5, 12], vec![5, 10], vec![5, 12]].contains(&v));
     }
 
     #[test]
     fn generate_from_token() {
-        let mut chain = Chain::new(0u, 100u);
-        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
-        let v = chain.generate_from_token(5u).map_in_place(|v| *v);
-        assert!([vec![5u, 10u], vec![5u, 12u]].contains(&v));
+        let mut chain = Chain::new(0u8, 100);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+        let v = chain.generate_from_token(5).into_iter().map(|v| *v).collect();
+        assert!([vec![5, 10], vec![5, 12]].contains(&v));
     }
 
     #[test]
     fn generate_from_unfound_token() {
-        let mut chain = Chain::new(0u, 100u);
-        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
-        let v = chain.generate_from_token(9u).map_in_place(|v| *v);
+        let mut chain = Chain::new(0u8, 100);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+        let v: Vec<_> = chain.generate_from_token(9).into_iter().map(|v| *v).collect();
         assert_eq!(v, vec![]);
     }
 
     #[test]
     fn iter() {    
-        let mut chain = Chain::new(0u, 100u);
-        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+        let mut chain = Chain::new(0u8, 100);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
         assert_eq!(chain.iter().size_hint().1, None);
     }
 
     #[test]
-    fn iter_for() {   
-        let mut chain = Chain::new(0u, 100u);
-        chain.feed(vec![3u, 5u, 10u]).feed(vec![5u, 12u]);
+    fn iter_for() {
+        let mut chain = Chain::new(0u8, 100);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
         assert_eq!(chain.iter_for(5).collect::<Vec<_>>().len(), 5);
     }
 
@@ -373,14 +380,14 @@ mod test {
     fn generate_str() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("I hate cats");
-        assert!(["I like cats", "I hate cats"].contains(&chain.generate_str()[]));
+        assert!(["I like cats", "I hate cats"].contains(&&chain.generate_str()[]));
     }
 
     #[test]
     fn generate_str_from_token() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("cats are cute");
-        assert!(["cats", "cats are cute"].contains(&chain.generate_str_from_token("cats")[]));
+        assert!(["cats", "cats are cute"].contains(&&chain.generate_str_from_token("cats")[]));
     }
 
     #[test]
