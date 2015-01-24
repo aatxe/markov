@@ -143,8 +143,8 @@ impl<T> Chain<T> where T: Decodable + Chainable {
         let data = try!(file.read_to_string());
         decode(&data[]).map_err(|e| IoError {
             kind: InvalidInput,
-            desc: "Decoder error",
-            detail: e.detail(),
+            desc: "Failed to decode markov chain.",
+            detail: Some(e.description().to_owned()),
         })
     }
 
@@ -158,7 +158,11 @@ impl<T> Chain<T> where T: for<'a> Encodable + Chainable {
     /// Saves a chain to a JSON file at the specified path.
     pub fn save(&self, path: &Path) -> IoResult<()> {
         let mut f = File::create(path);
-        f.write_str(&encode(self)[])
+        f.write_str(&try!(encode(self).map_err(|e| IoError {
+            kind: InvalidInput,
+            desc: "Failed to encode markov chain.",
+            detail: Some(e.description().to_owned()),
+        }))[])
     }
 
     /// Saves a chain to a JSON file using a string path.
