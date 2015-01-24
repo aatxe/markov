@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Chain` struct in crate `markov`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Chain">
+
+    <title>markov::Chain - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='index.html'>markov</a></p><div class='block struct'><h2>Structs</h2><a class='struct current' href='struct.Chain.html' title='A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This uses HashMaps internally, and so Eq and Hash are both required.'>Chain</a><a class='struct ' href='struct.InfiniteChainIterator.html' title='An infinite iterator over a Markov chain.'>InfiniteChainIterator</a><a class='struct ' href='struct.SizedChainIterator.html' title='A sized iterator over a Markov chain.'>SizedChainIterator</a></div><div class='block trait'><h2>Traits</h2><a class='trait ' href='trait.Chainable.html' title='The definition of all types that can be used in a Chain.'>Chainable</a></div>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>markov</a>::<wbr><a class='struct' href=''>Chain</a><wbr><a class='stability Experimental' title=''>Experimental</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="collapse-all" href="#">[-]
+            </a>&nbsp;<a id="expand-all" href="#">[+]</a>
+        </span><a id='src-48' href='../src/markov/lib.rs.html#48-52'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Chain&lt;T&gt; <span class='where'>where T: <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span> {
+    // some fields omitted
+}</pre><div class='docblock'><p>A generic <a href="https://en.wikipedia.org/wiki/Markov_chain">Markov chain</a> for almost any type. This
+uses HashMaps internally, and so Eq and Hash are both required.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><a class='stability Experimental' title='Experimental'></a><code>impl&lt;T&gt; <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.new' class='fnname'>new</a>(start: T, end: T) -&gt; <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Constructs a new Markov chain using the given tokens as the marked starting and ending
+points for generation.</p>
+</div><h4 id='method.is_empty' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.is_empty' class='fnname'>is_empty</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Determines whether or not the chain is empty. A chain is considered empty if nothing has
+been fed into it.</p>
+</div><h4 id='method.feed' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.feed' class='fnname'>feed</a>(&amp;mut self, tokens: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;T&gt;) -&gt; &amp;mut <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Feeds the chain a collection of tokens. This operation is O(n) where n is the number of
+tokens to be fed into the chain.</p>
+</div><h4 id='method.generate' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.generate' class='fnname'>generate</a>(&amp;self) -&gt; <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;T&gt;&gt;</code></h4>
+<div class='docblock'><p>Generates a collection of tokens from the chain. This operation is O(mn) where m is the
+length of the generated collection, and n is the number of possible states from a given
+state.</p>
+</div><h4 id='method.generate_from_token' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.generate_from_token' class='fnname'>generate_from_token</a>(&amp;self, token: T) -&gt; <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/alloc/rc/struct.Rc.html' title='alloc::rc::Rc'>Rc</a>&lt;T&gt;&gt;</code></h4>
+<div class='docblock'><p>Generates a collection of tokens from the chain, starting with the given token. This
+operation is O(mn) where m is the length of the generated collection, and n is the number
+of possible states from a given state. This returns an empty vector if the token is not
+found.</p>
+</div><h4 id='method.iter' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.iter' class='fnname'>iter</a>(&amp;self) -&gt; <a class='struct' href='../markov/struct.InfiniteChainIterator.html' title='markov::InfiniteChainIterator'>InfiniteChainIterator</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Produces an infinite iterator of generated token collections.</p>
+</div><h4 id='method.iter_for' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.iter_for' class='fnname'>iter_for</a>(&amp;self, size: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../markov/struct.SizedChainIterator.html' title='markov::SizedChainIterator'>SizedChainIterator</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Produces an iterator for the specified number of generated token collections.</p>
+</div></div><h3 class='impl'><a class='stability Experimental' title='Experimental'></a><code>impl&lt;T&gt; <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a> + <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span></code></h3><div class='impl-items'><h4 id='method.load' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.load' class='fnname'>load</a>(path: &amp;<a class='struct' href='http://doc.rust-lang.org/nightly/std/path/posix/struct.Path.html' title='std::path::posix::Path'>Path</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/std/io/type.IoResult.html' title='std::io::IoResult'>IoResult</a>&lt;<a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt;&gt;</code></h4>
+<div class='docblock'><p>Loads a chain from a JSON file at the specified path.</p>
+</div><h4 id='method.load_utf8' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.load_utf8' class='fnname'>load_utf8</a>(path: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/std/io/type.IoResult.html' title='std::io::IoResult'>IoResult</a>&lt;<a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt;&gt;</code></h4>
+<div class='docblock'><p>Loads a chain from a JSON file using a string path.</p>
+</div></div><h3 class='impl'><a class='stability Experimental' title='Experimental'></a><code>impl&lt;T&gt; <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt; <span class='where'>where T: for&lt;'a&gt; <a class='trait' href='../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a> + <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span></code></h3><div class='impl-items'><h4 id='method.save' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.save' class='fnname'>save</a>(&amp;self, path: &amp;<a class='struct' href='http://doc.rust-lang.org/nightly/std/path/posix/struct.Path.html' title='std::path::posix::Path'>Path</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/std/io/type.IoResult.html' title='std::io::IoResult'>IoResult</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Saves a chain to a JSON file at the specified path.</p>
+</div><h4 id='method.save_utf8' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.save_utf8' class='fnname'>save_utf8</a>(&amp;self, path: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/std/io/type.IoResult.html' title='std::io::IoResult'>IoResult</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Saves a chain to a JSON file using a string path.</p>
+</div></div><h3 class='impl'><a class='stability Experimental' title='Experimental'></a><code>impl <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</code></h3><div class='impl-items'><h4 id='method.for_strings' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.for_strings' class='fnname'>for_strings</a>() -&gt; <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</code></h4>
+<div class='docblock'><p>Creates a new Chain intended specifically for strings. This uses the Unicode start of text
+and end of text control characters as the starting and ending tokens for the chain.</p>
+</div><h4 id='method.feed_str' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.feed_str' class='fnname'>feed_str</a>(&amp;mut self, string: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</code></h4>
+<div class='docblock'><p>Feeds a string of text into the chain.</p>
+</div><h4 id='method.feed_file' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.feed_file' class='fnname'>feed_file</a>(&amp;mut self, path: &amp;<a class='struct' href='http://doc.rust-lang.org/nightly/std/path/posix/struct.Path.html' title='std::path::posix::Path'>Path</a>) -&gt; &amp;mut <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</code></h4>
+<div class='docblock'><p>Feeds a properly formatted file into the chain. This file should be formatted such that
+each line is a new sentence. Punctuation may be included if it is desired.</p>
+</div><h4 id='method.generate_str' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.generate_str' class='fnname'>generate_str</a>(&amp;self) -&gt; <a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
+<div class='docblock'><p>Generates a random string of text.</p>
+</div><h4 id='method.generate_str_from_token' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.generate_str_from_token' class='fnname'>generate_str_from_token</a>(&amp;self, string: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
+<div class='docblock'><p>Generates a random string of text starting with the desired token. This returns an empty
+string if the token is not found.</p>
+</div><h4 id='method.str_iter' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.str_iter' class='fnname'>str_iter</a>(&amp;self) -&gt; <a class='type' href='../markov/type.InfiniteChainStringIterator.html' title='markov::InfiniteChainStringIterator'>InfiniteChainStringIterator</a></code></h4>
+<div class='docblock'><p>Produces an infinite iterator of generated strings.</p>
+</div><h4 id='method.str_iter_for' class='method'><a class='stability Experimental' title='Experimental'></a><code>fn <a href='#method.str_iter_for' class='fnname'>str_iter_for</a>(&amp;self, size: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='../markov/type.SizedChainStringIterator.html' title='markov::SizedChainStringIterator'>SizedChainStringIterator</a></code></h4>
+<div class='docblock'><p>Produces a sized iterator of generated strings.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><a class='stability Unstable' title='Unstable: I/O and core have yet to be reconciled'></a><code>impl&lt;T: <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a>&gt; <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><a class='stability Unstable' title='Unstable: I/O and core have yet to be reconciled'></a><code>fn <a href='#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><a class='stability Stable' title='Stable'></a><code>impl&lt;T: <a class='trait' href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a>&gt; <a class='trait' href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt;) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><a class='stability Stable' title='Stable'></a><code>fn <a href='#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt;) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;T: <a class='trait' href='../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a>&gt; <a class='trait' href='../rustc-serialize/serialize/trait.Decodable.html' title='rustc-serialize::serialize::Decodable'>Decodable</a> for <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span></code></h3><div class='impl-items'><h4 id='method.decode' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.decode' class='fnname'>decode</a>&lt;__D: <a class='trait' href='../rustc-serialize/serialize/trait.Decoder.html' title='rustc-serialize::serialize::Decoder'>Decoder</a>&gt;(__arg_0: &amp;mut __D) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt;, Error&gt;</code></h4>
+</div><h3 class='impl'><a class='stability Unmarked' title='No stability level'></a><code>impl&lt;T: <a class='trait' href='../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a>&gt; <a class='trait' href='../rustc-serialize/serialize/trait.Encodable.html' title='rustc-serialize::serialize::Encodable'>Encodable</a> for <a class='struct' href='../markov/struct.Chain.html' title='markov::Chain'>Chain</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../markov/trait.Chainable.html' title='markov::Chainable'>Chainable</a></span></code></h3><div class='impl-items'><h4 id='method.encode' class='method'><a class='stability Unmarked' title='No stability level'></a><code>fn <a href='#method.encode' class='fnname'>encode</a>&lt;__S: <a class='trait' href='../rustc-serialize/serialize/trait.Encoder.html' title='rustc-serialize::serialize::Encoder'>Encoder</a>&gt;(&amp;self, __arg_0: &amp;mut __S) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, Error&gt;</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "markov";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>
