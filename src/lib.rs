@@ -18,7 +18,7 @@
 //! chain.feed(vec![1u8, 2, 3, 5]).feed(vec![3u8, 9, 2]);
 //! println!("{:?}", chain.generate());
 //! ```
-#![experimental]
+#![unstable]
 #![feature(collections, core, hash, io, path, rand, slicing_syntax, std_misc)]
 #![warn(missing_docs)]
 
