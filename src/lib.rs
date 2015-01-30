@@ -19,8 +19,7 @@
 //! println!("{:?}", chain.generate());
 //! ```
 #![experimental]
-#![feature(slicing_syntax)]
-#![allow(unstable)]
+#![feature(collections, core, hash, io, path, rand, slicing_syntax, std_misc)]
 #![warn(missing_docs)]
 
 extern crate "rustc-serialize" as rustc_serialize;
@@ -31,7 +30,7 @@ use std::collections::hash_map::Hasher;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::error::Error;
 use std::hash::Hash;
-use std::io::{BufferedReader, File, InvalidInput, IoError, IoResult};
+use std::old_io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::iter::Map;
 use std::rand::{Rng, thread_rng};
 use std::rc::Rc;

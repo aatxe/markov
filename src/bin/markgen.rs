@@ -1,5 +1,4 @@
-#![allow(unstable)]
-#![feature(slicing_syntax)]
+#![feature(collections, core, os, path, slicing_syntax)]
 extern crate markov;
 
 use std::os::args;
