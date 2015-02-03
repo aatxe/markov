@@ -1,4 +1,4 @@
-#![feature(collections, core, path, slicing_syntax)]
+#![feature(core, path, slicing_syntax)]
 extern crate markov;
 
 use std::os::args;
@@ -30,7 +30,7 @@ fn markov_gen(args: Vec<String>) -> Vec<String> {
     for arg in args.iter() {
         if expecting_num {
             match arg.parse() {
-                Some(n) if n > 0 => count = n,
+                Ok(n) if n > 0 => count = n,
                 _ => panic!("Expected positive integer argument to -n, found {}.", &arg[])
             }
             expecting_num = false;

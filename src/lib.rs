@@ -43,7 +43,7 @@ impl<T> Chainable for T where T: Eq + Hash<Hasher> {}
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
 /// uses HashMaps internally, and so Eq and Hash are both required.
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Show)]
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct Chain<T> where T: Chainable {
     map: HashMap<Rc<T>, HashMap<Rc<T>, usize>>,
     start: Rc<T>,
