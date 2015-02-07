@@ -19,9 +19,10 @@
 //! println!("{:?}", chain.generate());
 //! ```
 #![unstable]
-#![feature(collections, core, hash, io, path, rand, slicing_syntax, std_misc)]
+#![feature(collections, core, hash, io, path, slicing_syntax, std_misc)]
 #![warn(missing_docs)]
 
+extern crate rand;
 extern crate "rustc-serialize" as rustc_serialize;
 
 use std::borrow::ToOwned;
@@ -32,8 +33,8 @@ use std::error::Error;
 use std::hash::Hash;
 use std::old_io::{BufferedReader, File, InvalidInput, IoError, IoResult};
 use std::iter::Map;
-use std::rand::{Rng, thread_rng};
 use std::rc::Rc;
+use rand::{Rng, thread_rng};
 use rustc_serialize::{Decodable, Encodable};
 use rustc_serialize::json::{decode, encode};
 
@@ -236,7 +237,7 @@ impl Chain<String> {
 
 /// A sized iterator over a Markov chain of strings.
 pub type SizedChainStringIterator<'a> =
-Map<Vec<Rc<String>>, String, SizedChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
+Map<SizedChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
 
 /// A sized iterator over a Markov chain.
 pub struct SizedChainIterator<'a, T: Chainable + 'a> {
@@ -263,7 +264,7 @@ impl<'a, T> Iterator for SizedChainIterator<'a, T> where T: Chainable + 'a {
 
 /// An infinite iterator over a Markov chain of strings.
 pub type InfiniteChainStringIterator<'a> = 
-Map<Vec<Rc<String>>, String, InfiniteChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
+Map<InfiniteChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
 
 /// An infinite iterator over a Markov chain.
 pub struct InfiniteChainIterator<'a, T: Chainable + 'a> {

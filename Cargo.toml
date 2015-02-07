@@ -12,3 +12,4 @@ readme = "README.md"
 
 [dependencies]
 rustc-serialize = "~0.2.9"
+rand = "~0.1.2"
