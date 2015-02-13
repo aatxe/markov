@@ -1,4 +1,4 @@
-#![feature(core, env, os, path, slicing_syntax)]
+#![feature(env, path, slicing_syntax)]
 extern crate markov;
 
 use std::env::args;
@@ -6,7 +6,7 @@ use markov::Chain;
 
 #[cfg(not(test))]
 fn main() {
-    markov_gen(args().skip(1).map(|s| s.into_string().unwrap()).collect()).iter().map(|s| println!("{}", s)).count();
+    markov_gen(args().skip(1).collect()).iter().map(|s| println!("{}", s)).count();
 }
 
 /// Generates a number of strings using a markov chain on specified inputs. This is designed
