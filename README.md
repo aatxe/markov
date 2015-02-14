@@ -1,4 +1,4 @@
-# markov [![Build Status](https://travis-ci.org/aatxe/markov.svg?branch=master)](https://travis-ci.org/aatxe/markov) #
+# markov [![Build Status](https://travis-ci.org/aatxe/markov.svg?branch=master)](https://travis-ci.org/aatxe/markov) [![Crates.io](https://img.shields.io/crates/v/markov.svg)](https://crates.io/crates/markov) #
 
 A generic implementation of a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) in Rust. 
 Documentation can be found online [here](http://www.rust-ci.org/aatxe/markov/doc/markov/).
