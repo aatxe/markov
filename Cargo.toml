@@ -1,10 +1,10 @@
 [package]
 
 name = "markov"
-version = "0.0.20"
+version = "0.0.21"
 description = "A generic markov chain implementation in Rust."
 authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
-license = "Unlicense"
+license = "CC0-1.0"
 keywords = ["markov", "chain", "probability"]
 documentation = "http://aatxe.github.io/markov/markov/"
 repository = "https://github.com/aatxe/markov"
