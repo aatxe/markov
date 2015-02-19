@@ -1,4 +1,4 @@
-#![feature(env, path, slicing_syntax)]
+#![feature(env, path)]
 extern crate markov;
 
 use std::env::args;
