@@ -19,7 +19,7 @@
 //! println!("{:?}", chain.generate());
 //! ```
 #![unstable]
-#![feature(collections, core, hash, io, path, std_misc)]
+#![feature(collections, core, old_io, old_path, std_misc)]
 #![warn(missing_docs)]
 
 extern crate rand;
@@ -27,7 +27,6 @@ extern crate "rustc-serialize" as rustc_serialize;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
-use std::collections::hash_map::Hasher;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::error::Error;
 use std::hash::Hash;
@@ -39,8 +38,8 @@ use rustc_serialize::{Decodable, Encodable};
 use rustc_serialize::json::{decode, encode};
 
 /// The definition of all types that can be used in a Chain.
-pub trait Chainable: Eq + Hash<Hasher> {}
-impl<T> Chainable for T where T: Eq + Hash<Hasher> {}
+pub trait Chainable: Eq + Hash {}
+impl<T> Chainable for T where T: Eq + Hash {}
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
 /// uses HashMaps internally, and so Eq and Hash are both required.
@@ -141,7 +140,7 @@ impl<T> Chain<T> where T: Decodable + Chainable {
     pub fn load(path: &Path) -> IoResult<Chain<T>> {
         let mut file = try!(File::open(path));
         let data = try!(file.read_to_string());
-        decode(&data[]).map_err(|e| IoError {
+        decode(&data).map_err(|e| IoError {
             kind: InvalidInput,
             desc: "Failed to decode markov chain.",
             detail: Some(e.description().to_owned()),
@@ -162,7 +161,7 @@ impl<T> Chain<T> where T: for<'a> Encodable + Chainable {
             kind: InvalidInput,
             desc: "Failed to encode markov chain.",
             detail: Some(e.description().to_owned()),
-        }))[])
+        }))[..])
     }
 
     /// Saves a chain to a JSON file using a string path.
@@ -189,7 +188,7 @@ impl Chain<String> {
         let mut reader = BufferedReader::new(File::open(path));
         for line in reader.lines() {
             let line = line.unwrap();
-            let words: Vec<_> = line.split(&[' ', '\t', '\n', '\r'][])
+            let words: Vec<_> = line.split(&[' ', '\t', '\n', '\r'][..])
                                     .filter(|word| !word.is_empty())
                                     .collect();
             self.feed(words.iter().map(|&s| s.to_owned()).collect());
@@ -201,7 +200,7 @@ impl Chain<String> {
     fn vec_to_string(vec: Vec<Rc<String>>) -> String {
         let mut ret = String::new();
         for s in vec.iter() {
-            ret.push_str(&s[]);
+            ret.push_str(&s);
             ret.push_str(" ");
         }
         let len = ret.len();

@@ -1,4 +1,4 @@
-#![feature(env, path)]
+#![feature(env, old_path)]
 extern crate markov;
 
 use std::env::args;
@@ -26,18 +26,18 @@ fn main() {
 fn markov_gen(args: Vec<String>) -> Vec<String> {
     let mut chain = Chain::for_strings();
     let mut expecting_num = false;
-    let mut count = 1us;
+    let mut count = 1usize;
     for arg in args.iter() {
         if expecting_num {
             match arg.parse() {
                 Ok(n) if n > 0 => count = n,
-                _ => panic!("Expected positive integer argument to -n, found {}.", &arg[])
+                _ => panic!("Expected positive integer argument to -n, found {}.", &arg)
             }
             expecting_num = false;
-        } else if &arg[] == "-n" {
+        } else if &arg[..] == "-n" {
             expecting_num = true;
         } else {
-            chain.feed_file(&Path::new(&arg[]));
+            chain.feed_file(&Path::new(&arg));
         }
     }
     if chain.is_empty() { panic!("No files were fed into the chain.") }
