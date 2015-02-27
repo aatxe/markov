@@ -179,7 +179,7 @@ impl Chain<String> {
 
     /// Feeds a string of text into the chain.     
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
-        self.feed(string.split_str(" ").map(|s| s.to_owned()).collect())
+        self.feed(string.split(" ").map(|s| s.to_owned()).collect())
     }
 
     /// Feeds a properly formatted file into the chain. This file should be formatted such that
