@@ -19,7 +19,7 @@
 //! println!("{:?}", chain.generate());
 //! ```
 #![unstable]
-#![feature(core, old_io, old_path, std_misc)]
+#![feature(core, fs, io, path, std_misc)]
 #![warn(missing_docs)]
 
 extern crate rand;
@@ -28,10 +28,13 @@ extern crate "rustc-serialize" as rustc_serialize;
 use std::borrow::ToOwned;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::error::Error;
+use std::error::Error as StdError;
+use std::fs::File;
 use std::hash::Hash;
-use std::old_io::{BufferedReader, File, InvalidInput, IoError, IoResult};
+use std::io::{BufReader, Error, ErrorKind, Result};
+use std::io::prelude::*;
 use std::iter::Map;
+use std::path::Path;
 use std::rc::Rc;
 use rand::{Rng, thread_rng};
 use rustc_serialize::{Decodable, Encodable};
@@ -137,35 +140,35 @@ impl<T> Chain<T> where T: Chainable {
 
 impl<T> Chain<T> where T: Decodable + Chainable {
     /// Loads a chain from a JSON file at the specified path.
-    pub fn load(path: &Path) -> IoResult<Chain<T>> {
+    pub fn load(path: &Path) -> Result<Chain<T>> {
         let mut file = try!(File::open(path));
-        let data = try!(file.read_to_string());
-        decode(&data).map_err(|e| IoError {
-            kind: InvalidInput,
-            desc: "Failed to decode markov chain.",
-            detail: Some(e.description().to_owned()),
-        })
+        let mut data = String::new();
+        try!(file.read_to_string(&mut data));
+        decode(&data).map_err(|e| 
+            Error::new(ErrorKind::InvalidInput, "Failed to decode markov chain.", 
+                       Some(e.description().to_owned()))
+        )
     }
 
     /// Loads a chain from a JSON file using a string path.
-    pub fn load_utf8(path: &str) -> IoResult<Chain<T>> {
+    pub fn load_utf8(path: &str) -> Result<Chain<T>> {
         Chain::load(&Path::new(path))
     }
 }
 
 impl<T> Chain<T> where T: for<'a> Encodable + Chainable {
     /// Saves a chain to a JSON file at the specified path.
-    pub fn save(&self, path: &Path) -> IoResult<()> {
-        let mut f = File::create(path);
-        f.write_str(&try!(encode(self).map_err(|e| IoError {
-            kind: InvalidInput,
-            desc: "Failed to encode markov chain.",
-            detail: Some(e.description().to_owned()),
-        }))[..])
+    pub fn save(&self, path: &Path) -> Result<()> {
+        let mut f = try!(File::create(path));
+        try!(f.write_all(&try!(encode(self).map_err(|e| 
+            Error::new(ErrorKind::InvalidInput, "Failed to encode markov chain.", 
+                       Some(e.description().to_owned()))                                
+        )).as_bytes()));
+        f.flush()
     }
 
     /// Saves a chain to a JSON file using a string path.
-    pub fn save_utf8(&self, path: &str) -> IoResult<()> {
+    pub fn save_utf8(&self, path: &str) -> Result<()> {
         self.save(&Path::new(path))
     }
 }
@@ -185,7 +188,7 @@ impl Chain<String> {
     /// Feeds a properly formatted file into the chain. This file should be formatted such that
     /// each line is a new sentence. Punctuation may be included if it is desired.
     pub fn feed_file(&mut self, path: &Path) -> &mut Chain<String> {
-        let mut reader = BufferedReader::new(File::open(path));
+        let reader = BufReader::new(File::open(path).unwrap());
         for line in reader.lines() {
             let line = line.unwrap();
             let words: Vec<_> = line.split(&[' ', '\t', '\n', '\r'][..])
@@ -383,14 +386,14 @@ mod test {
     fn generate_str() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("I hate cats");
-        assert!(["I like cats", "I hate cats"].contains(&&chain.generate_str()[]));
+        assert!(["I like cats", "I hate cats"].contains(&&chain.generate_str()[..]));
     }
 
     #[test]
     fn generate_str_from_token() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats").feed_str("cats are cute");
-        assert!(["cats", "cats are cute"].contains(&&chain.generate_str_from_token("cats")[]));
+        assert!(["cats", "cats are cute"].contains(&&chain.generate_str_from_token("cats")[..]));
     }
 
     #[test]

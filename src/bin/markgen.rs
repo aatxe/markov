@@ -1,7 +1,8 @@
-#![feature(env, old_path)]
+#![feature(path)]
 extern crate markov;
 
 use std::env::args;
+use std::path::Path;
 use markov::Chain;
 
 #[cfg(not(test))]
@@ -37,7 +38,7 @@ fn markov_gen(args: Vec<String>) -> Vec<String> {
         } else if &arg[..] == "-n" {
             expecting_num = true;
         } else {
-            chain.feed_file(&Path::new(&arg));
+            chain.feed_file(Path::new(&arg));
         }
     }
     if chain.is_empty() { panic!("No files were fed into the chain.") }
