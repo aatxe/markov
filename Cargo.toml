@@ -11,5 +11,5 @@ repository = "https://github.com/aatxe/markov"
 readme = "README.md"
 
 [dependencies]
-rustc-serialize = "~0.2.15"
-rand = "~0.1.3"
+rustc-serialize = "*"
+rand = "*"
