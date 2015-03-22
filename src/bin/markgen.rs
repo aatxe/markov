@@ -1,4 +1,3 @@
-#![feature(path)]
 extern crate markov;
 
 use std::env::args;

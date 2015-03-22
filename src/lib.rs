@@ -19,7 +19,7 @@
 //! println!("{:?}", chain.generate());
 //! ```
 #![unstable]
-#![feature(core, io, path, std_misc)]
+#![feature(core, io, std_misc)]
 #![warn(missing_docs)]
 
 extern crate rand;
