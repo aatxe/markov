@@ -91,7 +91,7 @@ impl<T> Chain<T> where T: Chainable {
         }));
         toks.push(self.end.clone());
         for p in toks.windows(2) {
-            (&mut self.map[p[0]]).add(p[1].clone());
+            self.map.get_mut(&p[0]).unwrap().add(p[1].clone());
         }
         self
     }
