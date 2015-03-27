@@ -19,11 +19,11 @@
 //! println!("{:?}", chain.generate());
 //! ```
 #![unstable]
-#![feature(core, io, std_misc)]
+#![feature(io)]
 #![warn(missing_docs)]
 
 extern crate rand;
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
@@ -72,7 +72,7 @@ impl<T> Chain<T> where T: Chainable {
     /// Determines whether or not the chain is empty. A chain is considered empty if nothing has
     /// been fed into it.
     pub fn is_empty(&self) -> bool {
-        self.map[self.start.clone()].is_empty()
+        self.map[&self.start.clone()].is_empty()
     }
 
 
@@ -103,7 +103,7 @@ impl<T> Chain<T> where T: Chainable {
         let mut ret = Vec::new();
         let mut curs = self.start.clone();
         while curs != self.end {
-            curs = self.map[curs].next();
+            curs = self.map[&curs].next();
             ret.push(curs.clone());
         }
         ret.pop();
@@ -120,7 +120,7 @@ impl<T> Chain<T> where T: Chainable {
         let mut ret = vec![token.clone()];
         let mut curs = token;
         while curs != self.end {
-            curs = self.map[curs].next();
+            curs = self.map[&curs].next();
             ret.push(curs.clone());
         }
         ret.pop();
