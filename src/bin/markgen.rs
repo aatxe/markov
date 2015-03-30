@@ -69,19 +69,19 @@ mod test {
     }
 
     #[test]
-    #[should_fail(message = "No files were fed into the chain.")]
+    #[should_panic(message = "No files were fed into the chain.")]
     fn gen_invalid_no_files() {
         markov_gen(vec!["-n".to_owned(), "3".to_owned()]);
     }
 
     #[test]
-    #[should_fail(message = "Expected positive integer argument to -n, found 0.")]
+    #[should_panic(message = "Expected positive integer argument to -n, found 0.")]
     fn gen_invalid_n_arg_zero() {
         markov_gen(vec!["test".to_owned(), "-n".to_owned(), "0".to_owned()]);
     }
 
     #[test]
-    #[should_fail(message = "Expected positive integer argument to -n, found test.")]
+    #[should_panic(message = "Expected positive integer argument to -n, found test.")]
     fn gen_invalid_n_arg_string() {
         markov_gen(vec!["test".to_owned(), "-n".to_owned(), "test".to_owned()]);
     }
