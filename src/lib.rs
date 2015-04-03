@@ -19,7 +19,6 @@
 //! println!("{:?}", chain.generate());
 //! ```
 #![unstable]
-#![feature(io)]
 #![warn(missing_docs)]
 
 extern crate rand;
@@ -28,7 +27,6 @@ extern crate rustc_serialize;
 use std::borrow::ToOwned;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::error::Error as StdError;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufReader, Error, ErrorKind, Result};
@@ -144,9 +142,8 @@ impl<T> Chain<T> where T: Decodable + Chainable {
         let mut file = try!(File::open(path));
         let mut data = String::new();
         try!(file.read_to_string(&mut data));
-        decode(&data).map_err(|e| 
-            Error::new(ErrorKind::InvalidInput, "Failed to decode markov chain.", 
-                       Some(e.description().to_owned()))
+        decode(&data).map_err(|_| 
+            Error::new(ErrorKind::InvalidInput, "Failed to decode markov chain.")
         )
     }
 
@@ -160,9 +157,8 @@ impl<T> Chain<T> where T: for<'a> Encodable + Chainable {
     /// Saves a chain to a JSON file at the specified path.
     pub fn save(&self, path: &Path) -> Result<()> {
         let mut f = try!(File::create(path));
-        try!(f.write_all(&try!(encode(self).map_err(|e| 
-            Error::new(ErrorKind::InvalidInput, "Failed to encode markov chain.", 
-                       Some(e.description().to_owned()))                                
+        try!(f.write_all(&try!(encode(self).map_err(|_| 
+            Error::new(ErrorKind::InvalidInput, "Failed to encode markov chain.")                                
         )).as_bytes()));
         f.flush()
     }
