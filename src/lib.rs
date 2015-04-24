@@ -18,7 +18,6 @@
 //! chain.feed(vec![1u8, 2, 3, 5]).feed(vec![3u8, 9, 2]);
 //! println!("{:?}", chain.generate());
 //! ```
-#![unstable]
 #![warn(missing_docs)]
 
 extern crate rand;
