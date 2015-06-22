@@ -1,11 +1,11 @@
-//! A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
+//! A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
 //! uses HashMaps internally, and so Eq and Hash are both required.
 //!
 //! # Examples
 //!
 //! ```
 //! use markov::Chain;
-//! 
+//!
 //! let mut chain = Chain::for_strings();
 //! chain.feed_str("I like cats and I like dogs.");
 //! println!("{}", chain.generate_str());
@@ -41,7 +41,7 @@ use rustc_serialize::json::{decode, encode};
 pub trait Chainable: Eq + Hash {}
 impl<T> Chainable for T where T: Eq + Hash {}
 
-/// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This 
+/// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
 /// uses HashMaps internally, and so Eq and Hash are both required.
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct Chain<T> where T: Chainable {
@@ -141,7 +141,7 @@ impl<T> Chain<T> where T: Decodable + Chainable {
         let mut file = try!(File::open(path));
         let mut data = String::new();
         try!(file.read_to_string(&mut data));
-        decode(&data).map_err(|_| 
+        decode(&data).map_err(|_|
             Error::new(ErrorKind::InvalidInput, "Failed to decode markov chain.")
         )
     }
@@ -156,8 +156,8 @@ impl<T> Chain<T> where T: for<'a> Encodable + Chainable {
     /// Saves a chain to a JSON file at the specified path.
     pub fn save(&self, path: &Path) -> Result<()> {
         let mut f = try!(File::create(path));
-        try!(f.write_all(&try!(encode(self).map_err(|_| 
-            Error::new(ErrorKind::InvalidInput, "Failed to encode markov chain.")                                
+        try!(f.write_all(&try!(encode(self).map_err(|_|
+            Error::new(ErrorKind::InvalidInput, "Failed to encode markov chain.")
         )).as_bytes()));
         f.flush()
     }
@@ -175,7 +175,7 @@ impl Chain<String> {
         Chain::new("\u{0002}".to_owned(), "\u{0003}".to_owned())
     }
 
-    /// Feeds a string of text into the chain.     
+    /// Feeds a string of text into the chain.
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
         self.feed(string.split(" ").map(|s| s.to_owned()).collect())
     }
@@ -202,15 +202,15 @@ impl Chain<String> {
             ret.push_str(" ");
         }
         let len = ret.len();
-        if len > 0 { 
+        if len > 0 {
             ret.truncate(len - 1);
         }
         ret
     }
 
     /// Generates a random string of text.
-    pub fn generate_str(&self) -> String { 
-        Chain::vec_to_string(self.generate())    
+    pub fn generate_str(&self) -> String {
+        Chain::vec_to_string(self.generate())
     }
 
     /// Generates a random string of text starting with the desired token. This returns an empty
@@ -222,7 +222,7 @@ impl Chain<String> {
     /// Produces an infinite iterator of generated strings.
     pub fn str_iter(&self) -> InfiniteChainStringIterator {
         let vec_to_string: fn(Vec<Rc<String>>) -> String = Chain::vec_to_string;
-        self.iter().map(vec_to_string) 
+        self.iter().map(vec_to_string)
     }
 
     /// Produces a sized iterator of generated strings.
@@ -253,14 +253,14 @@ impl<'a, T> Iterator for SizedChainIterator<'a, T> where T: Chainable + 'a {
         }
     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) { 
-        (self.size, Some(self.size)) 
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.size, Some(self.size))
     }
 }
 
 
 /// An infinite iterator over a Markov chain of strings.
-pub type InfiniteChainStringIterator<'a> = 
+pub type InfiniteChainStringIterator<'a> =
 Map<InfiniteChainIterator<'a, String>, fn(Vec<Rc<String>>) -> String>;
 
 /// An infinite iterator over a Markov chain.
@@ -358,7 +358,7 @@ mod test {
     }
 
     #[test]
-    fn iter() {    
+    fn iter() {
         let mut chain = Chain::new(0u8, 100);
         chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
         assert_eq!(chain.iter().size_hint().1, None);
@@ -397,16 +397,16 @@ mod test {
         chain.feed_str("I like cats").feed_str("cats are cute");
         assert_eq!(chain.generate_str_from_token("test"), "");
     }
-    
+
     #[test]
-    fn str_iter() {    
+    fn str_iter() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats and I like dogs");
         assert_eq!(chain.str_iter().size_hint().1, None);
     }
 
     #[test]
-    fn str_iter_for() {   
+    fn str_iter_for() {
         let mut chain = Chain::for_strings();
         chain.feed_str("I like cats and I like dogs");
         assert_eq!(chain.str_iter_for(5).collect::<Vec<_>>().len(), 5);

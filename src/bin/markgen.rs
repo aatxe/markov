@@ -12,7 +12,7 @@ fn main() {
 /// Generates a number of strings using a markov chain on specified inputs. This is designed
 /// primarily for command-line usage. The arguments are expected to be paths to files to be fed
 /// into the chain. Additionally, the argument `-n #` is supported to specify the number of phrases
-/// to be generated. This number must be a positive, non-zero integer. 
+/// to be generated. This number must be a positive, non-zero integer.
 ///
 /// Some valid usages of this function:
 /// `markov_gen(vec!["test".to_owned()])`
