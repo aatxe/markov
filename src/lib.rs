@@ -70,7 +70,7 @@ impl<T> Chain<T> where T: Chainable {
 
     /// Choose a specific Markov chain order. The order is the number of previous tokens to use
     /// as the index into the map.
-    pub fn order(mut self, order: usize) -> Chain<T> {
+    pub fn order(&mut self, order: usize) -> &mut Chain<T> {
         assert!(order > 0);
         self.order = order;
         self.map.insert(vec!(self.start.clone(); self.order), HashMap::new());
@@ -356,7 +356,8 @@ mod test {
 
     #[test]
     fn generate_for_higher_order() {
-        let mut chain = Chain::new(0u8, 100).order(2);
+        let mut chain = Chain::new(0u8, 100);
+        chain.order(2);
         chain.feed(vec![3, 5, 10]).feed(vec![2, 3, 5, 12]);
         let v = chain.generate().into_iter().map(|v| *v).collect();
         assert!([vec![3, 5, 10], vec![3, 5, 12], vec![2, 3, 5, 10], vec![2, 3, 5, 12]].contains(&v));
