@@ -45,7 +45,7 @@ impl<T> Chainable for T where T: Eq + Hash {}
 /// uses HashMaps internally, and so Eq and Hash are both required.
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct Chain<T> where T: Chainable {
-    map: HashMap<Rc<T>, HashMap<Rc<T>, usize>>,
+    map: HashMap<Vec<Rc<T>>, HashMap<Rc<T>, usize>>,
     start: Rc<T>,
     end: Rc<T>,
 }
@@ -59,7 +59,7 @@ impl<T> Chain<T> where T: Chainable {
         Chain {
             map: {
                 let mut map = HashMap::new();
-                map.insert(start.clone(), HashMap::new());
+                map.insert(vec!(start.clone(); 2), HashMap::new());
                 map
             },
             start: start, end: end
@@ -69,7 +69,7 @@ impl<T> Chain<T> where T: Chainable {
     /// Determines whether or not the chain is empty. A chain is considered empty if nothing has
     /// been fed into it.
     pub fn is_empty(&self) -> bool {
-        self.map[&self.start.clone()].is_empty()
+        self.map[&vec!(self.start.clone(); 2)].is_empty()
     }
 
 
@@ -77,18 +77,16 @@ impl<T> Chain<T> where T: Chainable {
     /// tokens to be fed into the chain.
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
         if tokens.len() == 0 { return self }
-        let mut toks = Vec::new();
-        toks.push(self.start.clone());
+        let mut toks = vec!(self.start.clone(); 2);
         toks.extend(tokens.into_iter().map(|token| {
-            let rc = Rc::new(token);
-            if !self.map.contains_key(&rc) {
-                self.map.insert(rc.clone(), HashMap::new());
-            }
-            rc
+            Rc::new(token)
         }));
         toks.push(self.end.clone());
-        for p in toks.windows(2) {
-            self.map.get_mut(&p[0]).unwrap().add(p[1].clone());
+        for p in toks.windows(3) {
+            if !self.map.contains_key(&p[0..2].to_vec()) {
+                self.map.insert(p[0..2].to_vec(), HashMap::new());
+            }
+            self.map.get_mut(&p[0..2].to_vec()).unwrap().add(p[2].clone());
         }
         self
     }
@@ -98,10 +96,12 @@ impl<T> Chain<T> where T: Chainable {
     /// state.
     pub fn generate(&self) -> Vec<Rc<T>> {
         let mut ret = Vec::new();
-        let mut curs = self.start.clone();
-        while curs != self.end {
-            curs = self.map[&curs].next();
-            ret.push(curs.clone());
+        let mut curs = vec!(self.start.clone(); 2);
+        while curs[1] != self.end {
+            let temp = curs[1].clone();
+            curs[1] = self.map[&curs].next();
+            curs[0] = temp;
+            ret.push(curs[1].clone());
         }
         ret.pop();
         ret
@@ -113,12 +113,14 @@ impl<T> Chain<T> where T: Chainable {
     /// found.
     pub fn generate_from_token(&self, token: T) -> Vec<Rc<T>> {
         let token = Rc::new(token);
-        if !self.map.contains_key(&token) { return Vec::new() }
+        if !self.map.contains_key(&vec!(token.clone(); 2)) { return Vec::new() }
         let mut ret = vec![token.clone()];
-        let mut curs = token;
-        while curs != self.end {
-            curs = self.map[&curs].next();
-            ret.push(curs.clone());
+        let mut curs = vec!(token.clone(); 2);
+        while curs[1] != self.end {
+            let temp = curs[1].clone();
+            curs[1] = self.map[&curs].next();
+            curs[0] = temp;
+            ret.push(curs[1].clone());
         }
         ret.pop();
         ret
