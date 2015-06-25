@@ -12,20 +12,26 @@ fn main() {
 /// Generates a number of strings using a markov chain on specified inputs. This is designed
 /// primarily for command-line usage. The arguments are expected to be paths to files to be fed
 /// into the chain. Additionally, the argument `-n #` is supported to specify the number of phrases
-/// to be generated. This number must be a positive, non-zero integer.
+/// to be generated. This number must be a positive, non-zero integer. `-o #` is also supported to
+/// specify the order of Markov chain to be used. Note `-o` must be specified before any file
+/// names and must also be a positive, non-zero integer.
 ///
 /// Some valid usages of this function:
 /// `markov_gen(vec!["test".to_owned()])`
 /// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "3".to_owned()])`
 /// `markov_gen(vec!["-n".to_owned(), "3".to_owned(), "test".to_owned()])`
+/// `markov_gen(vec!["-o".to_owned(), "2".to_owned(), "test".to_owned()])`
 ///
 /// Some invalid usages of this function:
 /// `markov_gen(vec!["-n".to_owned(), "3".to_owned()])`
 /// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "0".to_owned()])`
 /// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "test".to_owned()])`
+/// `markov_gen(vec!["test".to_owned(), "-o".to_owned(), "3".to_owned()])`
+/// `markov_gen(vec!["-o".to_owned(), "0".to_owned()], "test".to_owned())`
 fn markov_gen(args: Vec<String>) -> Vec<String> {
-    let mut chain = Chain::for_strings().order(2);
+    let mut chain = Chain::for_strings();
     let mut expecting_num = false;
+    let mut expecting_order = false;
     let mut count = 1usize;
     for arg in args.iter() {
         if expecting_num {
@@ -34,8 +40,17 @@ fn markov_gen(args: Vec<String>) -> Vec<String> {
                 _ => panic!("Expected positive integer argument to -n, found {}.", &arg)
             }
             expecting_num = false;
+        } else if expecting_order {
+            match arg.parse() {
+                Ok(n) if n > 0 => chain.order(n),
+                _ => panic!("Expected positive integer argument to -o, found {}.", &arg)
+            };
+            expecting_order = false;
         } else if &arg[..] == "-n" {
             expecting_num = true;
+        } else if &arg[..] == "-o" {
+            if !chain.is_empty() { panic!("Order must be set before feeding in files") }
+            expecting_order = true;
         } else {
             chain.feed_file(Path::new(&arg));
         }
