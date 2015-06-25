@@ -48,6 +48,7 @@ pub struct Chain<T> where T: Chainable {
     map: HashMap<Vec<Rc<T>>, HashMap<Rc<T>, usize>>,
     start: Rc<T>,
     end: Rc<T>,
+    order: usize,
 }
 
 impl<T> Chain<T> where T: Chainable {
@@ -59,17 +60,27 @@ impl<T> Chain<T> where T: Chainable {
         Chain {
             map: {
                 let mut map = HashMap::new();
-                map.insert(vec!(start.clone(); 2), HashMap::new());
+                map.insert(vec!(start.clone(); 1), HashMap::new());
                 map
             },
+            order: 1,
             start: start, end: end
         }
+    }
+
+    /// Choose a specific Markov chain order. The order is the number of previous tokens to use
+    /// as the index into the map.
+    pub fn order(&mut self, order: usize) -> &mut Chain<T> {
+        assert!(order > 0);
+        self.order = order;
+        self.map.insert(vec!(self.start.clone(); self.order), HashMap::new());
+        self
     }
 
     /// Determines whether or not the chain is empty. A chain is considered empty if nothing has
     /// been fed into it.
     pub fn is_empty(&self) -> bool {
-        self.map[&vec!(self.start.clone(); 2)].is_empty()
+        self.map[&vec!(self.start.clone(); self.order)].is_empty()
     }
 
 
@@ -77,16 +88,16 @@ impl<T> Chain<T> where T: Chainable {
     /// tokens to be fed into the chain.
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
         if tokens.len() == 0 { return self }
-        let mut toks = vec!(self.start.clone(); 2);
+        let mut toks = vec!(self.start.clone(); self.order);
         toks.extend(tokens.into_iter().map(|token| {
             Rc::new(token)
         }));
         toks.push(self.end.clone());
-        for p in toks.windows(3) {
-            if !self.map.contains_key(&p[0..2].to_vec()) {
-                self.map.insert(p[0..2].to_vec(), HashMap::new());
+        for p in toks.windows(self.order + 1) {
+            if !self.map.contains_key(&p[0..self.order].to_vec()) {
+                self.map.insert(p[0..self.order].to_vec(), HashMap::new());
             }
-            self.map.get_mut(&p[0..2].to_vec()).unwrap().add(p[2].clone());
+            self.map.get_mut(&p[0..self.order].to_vec()).unwrap().add(p[self.order].clone());
         }
         self
     }
@@ -96,12 +107,12 @@ impl<T> Chain<T> where T: Chainable {
     /// state.
     pub fn generate(&self) -> Vec<Rc<T>> {
         let mut ret = Vec::new();
-        let mut curs = vec!(self.start.clone(); 2);
-        while curs[1] != self.end {
-            let temp = curs[1].clone();
-            curs[1] = self.map[&curs].next();
-            curs[0] = temp;
-            ret.push(curs[1].clone());
+        let mut curs = vec!(self.start.clone(); self.order);
+        while curs[self.order - 1] != self.end {
+            let next = self.map[&curs].next();
+            curs = curs[1..self.order].to_vec();
+            curs.push(next.clone());
+            ret.push(next);
         }
         ret.pop();
         ret
@@ -113,14 +124,14 @@ impl<T> Chain<T> where T: Chainable {
     /// found.
     pub fn generate_from_token(&self, token: T) -> Vec<Rc<T>> {
         let token = Rc::new(token);
-        if !self.map.contains_key(&vec!(token.clone(); 2)) { return Vec::new() }
+        if !self.map.contains_key(&vec!(token.clone(); self.order)) { return Vec::new() }
         let mut ret = vec![token.clone()];
-        let mut curs = vec!(token.clone(); 2);
-        while curs[1] != self.end {
-            let temp = curs[1].clone();
-            curs[1] = self.map[&curs].next();
-            curs[0] = temp;
-            ret.push(curs[1].clone());
+        let mut curs = vec!(token.clone(); self.order);
+        while curs[self.order - 1] != self.end {
+            let next = self.map[&curs].next();
+            curs = curs[1..self.order].to_vec();
+            curs.push(next.clone());
+            ret.push(next);
         }
         ret.pop();
         ret

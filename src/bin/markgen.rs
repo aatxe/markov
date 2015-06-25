@@ -24,7 +24,7 @@ fn main() {
 /// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "0".to_owned()])`
 /// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "test".to_owned()])`
 fn markov_gen(args: Vec<String>) -> Vec<String> {
-    let mut chain = Chain::for_strings();
+    let mut chain = Chain::for_strings().order(2);
     let mut expecting_num = false;
     let mut count = 1usize;
     for arg in args.iter() {
