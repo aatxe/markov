@@ -21,7 +21,6 @@
 #![warn(missing_docs)]
 
 extern crate rand;
-extern crate rustc_serialize;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
@@ -35,8 +34,6 @@ use std::iter::Map;
 use std::path::Path;
 use std::rc::Rc;
 use rand::{Rng, thread_rng};
-use rustc_serialize::{Decodable, Encodable};
-use rustc_serialize::json::{decode, encode};
 
 /// The definition of all types that can be used in a Chain.
 pub trait Chainable: Eq + Hash {}
@@ -44,7 +41,7 @@ impl<T> Chainable for T where T: Eq + Hash {}
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
 /// uses HashMaps internally, and so Eq and Hash are both required.
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Chain<T> where T: Chainable {
     map: HashMap<Vec<Option<Rc<T>>>, HashMap<Option<Rc<T>>, usize>>,
     order: usize,
@@ -140,39 +137,6 @@ impl<T> Chain<T> where T: Chainable {
     /// Produces an iterator for the specified number of generated token collections.
     pub fn iter_for(&self, size: usize) -> SizedChainIterator<T> {
         SizedChainIterator { chain: self, size: size }
-    }
-}
-
-impl<T> Chain<T> where T: Decodable + Chainable {
-    /// Loads a chain from a JSON file at the specified path.
-    pub fn load(path: &Path) -> Result<Chain<T>> {
-        let mut file = try!(File::open(path));
-        let mut data = String::new();
-        try!(file.read_to_string(&mut data));
-        decode(&data).map_err(|_|
-            Error::new(ErrorKind::InvalidInput, "Failed to decode markov chain.")
-        )
-    }
-
-    /// Loads a chain from a JSON file using a string path.
-    pub fn load_utf8(path: &str) -> Result<Chain<T>> {
-        Chain::load(&Path::new(path))
-    }
-}
-
-impl<T> Chain<T> where T: for<'a> Encodable + Chainable {
-    /// Saves a chain to a JSON file at the specified path.
-    pub fn save(&self, path: &Path) -> Result<()> {
-        let mut f = try!(File::create(path));
-        try!(f.write_all(&try!(encode(self).map_err(|_|
-            Error::new(ErrorKind::InvalidInput, "Failed to encode markov chain.")
-        )).as_bytes()));
-        f.flush()
-    }
-
-    /// Saves a chain to a JSON file using a string path.
-    pub fn save_utf8(&self, path: &str) -> Result<()> {
-        self.save(&Path::new(path))
     }
 }
 
@@ -421,21 +385,5 @@ mod test {
         let mut chain = Chain::new();
         chain.feed_str("I like cats and I like dogs");
         assert_eq!(chain.str_iter_for(5).collect::<Vec<_>>().len(), 5);
-    }
-
-    #[test]
-    fn save() {
-        let mut chain = Chain::new();
-        chain.feed_str("I like cats and I like dogs");
-        chain.save_utf8("save.json").unwrap();
-    }
-
-    #[test]
-    fn load() {
-        let mut chain = Chain::new();
-        chain.feed_str("I like cats and I like dogs");
-        chain.save_utf8("load.json").unwrap();
-        let other_chain: Chain<String> = Chain::load_utf8("load.json").unwrap();
-        assert_eq!(other_chain, chain);
     }
 }
