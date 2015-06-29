@@ -29,7 +29,7 @@ fn main() {
 /// `markov_gen(vec!["test".to_owned(), "-o".to_owned(), "3".to_owned()])`
 /// `markov_gen(vec!["-o".to_owned(), "0".to_owned()], "test".to_owned())`
 fn markov_gen(args: Vec<String>) -> Vec<String> {
-    let mut chain = Chain::for_strings();
+    let mut chain: Chain<String> = Chain::new();
     let mut expecting_num = false;
     let mut expecting_order = false;
     let mut count = 1usize;
