@@ -12,7 +12,7 @@ extern crate markov;
 use markov::Chain;
 
 fn main() {
-    let mut chain = Chain::for_strings();
+    let mut chain = Chain::new();
     chain.feed_str("I like cats and I like dogs.");
     println!("{}", chain.generate_str());
 }
@@ -25,7 +25,7 @@ extern crate markov;
 use markov::Chain;
 
 fn main() {
-    let mut chain = Chain::new(0u8, 255);
+    let mut chain = Chain::new();
     chain.feed(vec![1u8, 2, 3, 5]).feed(vec![3u8, 9, 2]);
     println!("{}", chain.generate());
 }
@@ -38,7 +38,7 @@ extern crate markov;
 use markov::Chain;
 
 fn main() {
-    let mut chain = Chain::for_strings();
+    let mut chain = Chain::new();
     chain.feed_str("I like cats and I like dogs.");
     for line in chain.iter_for(5) {
         println!("{}", line);
