@@ -2,6 +2,7 @@ env:
   global:
     - secure: VXI49IEmNxeJ799LCHItlclQ9fD2Wkqtl2NyTk3ynwJajrxJtsUwZa1NAgvJJ9sftwnTCB77Chto7pOn6xacK3do/W0fNweW8aAeqVeyGexFt3N3DGhdt52oznvk7ECTdvB1du5msQQQgwb4M2aNQ6ZIycrsaGYIJHWyJTuLxvI=
 language: rust
+sudo: false
 script:
   - cargo build --verbose
   - cargo test --verbose
