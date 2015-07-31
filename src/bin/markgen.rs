@@ -1,12 +1,15 @@
+#![cfg(feature = "getopts")]
+extern crate getopts;
 extern crate markov;
 
 use std::env::args;
 use std::path::Path;
+use getopts::Options;
 use markov::Chain;
 
 #[cfg(not(test))]
 fn main() {
-    markov_gen(args().skip(1).collect()).iter().map(|s| println!("{}", s)).count();
+    markov_gen(args().collect()).iter().map(|s| println!("{}", s)).count();
 }
 
 /// Generates a number of strings using a markov chain on specified inputs. This is designed
@@ -29,34 +32,39 @@ fn main() {
 /// `markov_gen(vec!["test".to_owned(), "-o".to_owned(), "3".to_owned()])`
 /// `markov_gen(vec!["-o".to_owned(), "0".to_owned()], "test".to_owned())`
 fn markov_gen(args: Vec<String>) -> Vec<String> {
-    let mut chain: Chain<String> = Chain::new();
-    let mut expecting_num = false;
-    let mut expecting_order = false;
-    let mut count = 1usize;
-    for arg in args.iter() {
-        if expecting_num {
+    let mut opts = Options::new();
+    opts.optopt("n", "count", "set the number of phrases to generate", "3");
+    opts.optopt("o", "order", "set the order of the Markov chain", "2");
+    opts.optflag("h", "help", "print this help menu");
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(e) => panic!(e.to_string()),
+    };
+    if matches.opt_present("h") {
+        let brief = format!("Usage: {} FILE1 [FILE2 FILE3 ...] [options]", args[0]);
+        print!("{}", opts.usage(&brief));
+        Vec::new()
+    } else {
+        let mut chain: Chain<String> = Chain::new();
+        let count = match matches.opt_str("n") {
+            Some(arg) => match arg.parse() {
+                Ok(n) if n > 0 => n,
+                _ => panic!("Expected positive integer argument to -n, found {}.", &arg),
+            },
+            None => 1
+        };
+        if let Some(arg) = matches.opt_str("o") {
             match arg.parse() {
-                Ok(n) if n > 0 => count = n,
-                _ => panic!("Expected positive integer argument to -n, found {}.", &arg)
+                Ok(n) if n > 0 => { chain.order(n); },
+                _ => panic!("Expected positive integer argument to -n, found {}.", &arg),
             }
-            expecting_num = false;
-        } else if expecting_order {
-            match arg.parse() {
-                Ok(n) if n > 0 => chain.order(n),
-                _ => panic!("Expected positive integer argument to -o, found {}.", &arg)
-            };
-            expecting_order = false;
-        } else if &arg[..] == "-n" {
-            expecting_num = true;
-        } else if &arg[..] == "-o" {
-            if !chain.is_empty() { panic!("Order must be set before feeding in files") }
-            expecting_order = true;
-        } else {
-            chain.feed_file(Path::new(&arg));
         }
+        for path in matches.free.iter() {
+            chain.feed_file(Path::new(&path));
+        }
+        if chain.is_empty() { panic!("No files were fed into the chain.") }
+        chain.str_iter_for(count).collect()
     }
-    if chain.is_empty() { panic!("No files were fed into the chain.") }
-    chain.str_iter_for(count).collect()
 }
 
 #[cfg(test)]
