@@ -33,8 +33,8 @@ fn main() {
 /// `markov_gen(vec!["-o".to_owned(), "0".to_owned()], "test".to_owned())`
 fn markov_gen(args: Vec<String>) -> Vec<String> {
     let mut opts = Options::new();
-    opts.optopt("n", "count", "set the number of phrases to generate", "3");
-    opts.optopt("o", "order", "set the order of the Markov chain", "2");
+    opts.optopt("n", "count", "set the number of phrases to generate", "COUNT");
+    opts.optopt("o", "order", "set the order of the Markov chain", "ORDER");
     opts.optflag("h", "help", "print this help menu");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
