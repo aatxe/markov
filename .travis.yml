@@ -4,7 +4,7 @@ env:
 language: rust
 sudo: false
 script:
-  - cargo build --verbose
+  - cargo build --verbose --features "getopts"
   - cargo test --verbose
   - rustdoc --test README.md -L target
   - cargo doc --verbose
