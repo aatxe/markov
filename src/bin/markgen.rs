@@ -1,15 +1,19 @@
-#![cfg(feature = "getopts")]
-extern crate getopts;
-extern crate markov;
+#[cfg(feature = "getopts")] extern crate getopts;
+#[cfg(feature = "getopts")] extern crate markov;
 
-use std::env::args;
-use std::path::Path;
-use getopts::Options;
-use markov::Chain;
+#[cfg(feature = "getopts")] use std::env::args;
+#[cfg(feature = "getopts")] use std::path::Path;
+#[cfg(feature = "getopts")] use getopts::Options;
+#[cfg(feature = "getopts")] use markov::Chain;
 
-#[cfg(not(test))]
+#[cfg(all(feature = "getopts", not(test)))]
 fn main() {
     markov_gen(args().collect()).iter().map(|s| println!("{}", s)).count();
+}
+
+#[cfg(all(not(feature = "getopts"), not(test)))]
+fn main() {
+    println!("markgen must be compiled with getopts enabled.")
 }
 
 /// Generates a number of strings using a markov chain on specified inputs. This is designed
@@ -31,6 +35,7 @@ fn main() {
 /// `markov_gen(vec!["test".to_owned(), "-n".to_owned(), "test".to_owned()])`
 /// `markov_gen(vec!["test".to_owned(), "-o".to_owned(), "3".to_owned()])`
 /// `markov_gen(vec!["-o".to_owned(), "0".to_owned()], "test".to_owned())`
+#[cfg(feature = "getopts")]
 fn markov_gen(args: Vec<String>) -> Vec<String> {
     let mut opts = Options::new();
     opts.optopt("n", "count", "set the number of phrases to generate", "COUNT");
