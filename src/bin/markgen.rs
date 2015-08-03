@@ -79,38 +79,38 @@ mod test {
 
     #[test]
     fn gen_default() {
-        assert_eq!(markov_gen(vec!["test".to_owned()]).len(), 1)
+        assert_eq!(markov_gen(vec!["prog".to_owned(), "test".to_owned()]).len(), 1)
     }
 
     #[test]
     fn gen_number_after() {
         assert_eq!(markov_gen(
-            vec!["test".to_owned(), "-n".to_owned(), "3".to_owned()]
+            vec!["markgen".to_owned(), "test".to_owned(), "-n".to_owned(), "3".to_owned()]
         ).len(), 3)
     }
 
     #[test]
     fn gen_before_number() {
         assert_eq!(markov_gen(
-            vec!["-n".to_owned(), "3".to_owned(), "test".to_owned()]
+            vec!["markgen".to_owned(), "-n".to_owned(), "3".to_owned(), "test".to_owned()]
         ).len(), 3)
     }
 
     #[test]
     #[should_panic(message = "No files were fed into the chain.")]
     fn gen_invalid_no_files() {
-        markov_gen(vec!["-n".to_owned(), "3".to_owned()]);
+        markov_gen(vec!["prog".to_owned(), "-n".to_owned(), "3".to_owned()]);
     }
 
     #[test]
     #[should_panic(message = "Expected positive integer argument to -n, found 0.")]
     fn gen_invalid_n_arg_zero() {
-        markov_gen(vec!["test".to_owned(), "-n".to_owned(), "0".to_owned()]);
+        markov_gen(vec!["prog".to_owned(), "test".to_owned(), "-n".to_owned(), "0".to_owned()]);
     }
 
     #[test]
     #[should_panic(message = "Expected positive integer argument to -n, found test.")]
     fn gen_invalid_n_arg_string() {
-        markov_gen(vec!["test".to_owned(), "-n".to_owned(), "test".to_owned()]);
+        markov_gen(vec!["prog".to_owned(), "test".to_owned(), "-n".to_owned(), "test".to_owned()]);
     }
 }
