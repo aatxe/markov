@@ -1,3 +1,5 @@
 /target
 /Cargo.lock
 *.json
+log
+tswift_1989
