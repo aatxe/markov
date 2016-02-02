@@ -38,11 +38,13 @@ use rand::{Rng, thread_rng};
 pub trait Chainable: Eq + Hash {}
 impl<T> Chainable for T where T: Eq + Hash {}
 
+type Token<T> = Option<Rc<T>>;
+
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
 /// uses HashMaps internally, and so Eq and Hash are both required.
 #[derive(PartialEq, Debug)]
 pub struct Chain<T> where T: Chainable {
-    map: HashMap<Vec<Option<Rc<T>>>, HashMap<Option<Rc<T>>, usize>>,
+    map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
     order: usize,
 }
 
@@ -243,20 +245,20 @@ impl<'a, T> Iterator for InfiniteChainIterator<'a, T> where T: Chainable + 'a {
 /// A collection of states for the Markov chain.
 trait States<T: PartialEq> {
     /// Adds a state to this states collection.
-    fn add(&mut self, token: Option<Rc<T>>);
+    fn add(&mut self, token: Token<T>);
     /// Gets the next state from this collection of states.
-    fn next(&self) -> Option<Rc<T>>;
+    fn next(&self) -> Token<T>;
 }
 
-impl<T> States<T> for HashMap<Option<Rc<T>>, usize> where T: Chainable {
-    fn add(&mut self, token: Option<Rc<T>>) {
+impl<T> States<T> for HashMap<Token<T>, usize> where T: Chainable {
+    fn add(&mut self, token: Token<T>) {
         match self.entry(token) {
             Occupied(mut e) => *e.get_mut() += 1,
             Vacant(e) => { e.insert(1); },
         }
     }
 
-    fn next(&self) -> Option<Rc<T>> {
+    fn next(&self) -> Token<T> {
         let mut sum = 0;
         for &value in self.values() {
             sum += value;
