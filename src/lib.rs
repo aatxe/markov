@@ -78,7 +78,7 @@ impl<T> Chain<T> where T: Chainable {
     /// Feeds the chain a collection of tokens. This operation is O(n) where n is the number of
     /// tokens to be fed into the chain.
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
-        if tokens.len() == 0 { return self }
+        if tokens.is_empty() { return self }
         let mut toks = vec!(None; self.order);
         toks.extend(tokens.into_iter().map(|token| {
             Some(Rc::new(token))
