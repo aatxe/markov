@@ -162,7 +162,7 @@ impl Chain<String> {
     /// Converts the output of generate(...) on a String chain to a single String.
     fn vec_to_string(vec: Vec<Rc<String>>) -> String {
         let mut ret = String::new();
-        for s in vec.iter() {
+        for s in &vec {
             ret.push_str(&s);
             ret.push_str(" ");
         }
