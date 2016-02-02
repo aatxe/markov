@@ -38,11 +38,13 @@ use rand::{Rng, thread_rng};
 pub trait Chainable: Eq + Hash {}
 impl<T> Chainable for T where T: Eq + Hash {}
 
+type Token<T> = Option<Rc<T>>;
+
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
 /// uses HashMaps internally, and so Eq and Hash are both required.
 #[derive(PartialEq, Debug)]
 pub struct Chain<T> where T: Chainable {
-    map: HashMap<Vec<Option<Rc<T>>>, HashMap<Option<Rc<T>>, usize>>,
+    map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
     order: usize,
 }
 
@@ -78,7 +80,7 @@ impl<T> Chain<T> where T: Chainable {
     /// Feeds the chain a collection of tokens. This operation is O(n) where n is the number of
     /// tokens to be fed into the chain.
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
-        if tokens.len() == 0 { return self }
+        if tokens.is_empty() { return self }
         let mut toks = vec!(None; self.order);
         toks.extend(tokens.into_iter().map(|token| {
             Some(Rc::new(token))
@@ -162,7 +164,7 @@ impl Chain<String> {
     /// Converts the output of generate(...) on a String chain to a single String.
     fn vec_to_string(vec: Vec<Rc<String>>) -> String {
         let mut ret = String::new();
-        for s in vec.iter() {
+        for s in &vec {
             ret.push_str(&s);
             ret.push_str(" ");
         }
@@ -243,20 +245,20 @@ impl<'a, T> Iterator for InfiniteChainIterator<'a, T> where T: Chainable + 'a {
 /// A collection of states for the Markov chain.
 trait States<T: PartialEq> {
     /// Adds a state to this states collection.
-    fn add(&mut self, token: Option<Rc<T>>);
+    fn add(&mut self, token: Token<T>);
     /// Gets the next state from this collection of states.
-    fn next(&self) -> Option<Rc<T>>;
+    fn next(&self) -> Token<T>;
 }
 
-impl<T> States<T> for HashMap<Option<Rc<T>>, usize> where T: Chainable {
-    fn add(&mut self, token: Option<Rc<T>>) {
+impl<T> States<T> for HashMap<Token<T>, usize> where T: Chainable {
+    fn add(&mut self, token: Token<T>) {
         match self.entry(token) {
             Occupied(mut e) => *e.get_mut() += 1,
             Vacant(e) => { e.insert(1); },
         }
     }
 
-    fn next(&self) -> Option<Rc<T>> {
+    fn next(&self) -> Token<T> {
         let mut sum = 0;
         for &value in self.values() {
             sum += value;
