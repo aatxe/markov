@@ -153,10 +153,11 @@ impl Chain<String> {
         let reader = BufReader::new(File::open(path).unwrap());
         for line in reader.lines() {
             let line = line.unwrap();
-            let words: Vec<_> = line.split_whitespace()
-                                    .filter(|word| !word.is_empty())
-                                    .collect();
-            self.feed(words.iter().map(|&s| s.to_owned()).collect());
+            let words = line.split_whitespace()
+                            .filter(|word| !word.is_empty())
+                            .map(|s| s.to_owned())
+                            .collect();
+            self.feed(words);
         }
         self
     }
