@@ -11,5 +11,5 @@ repository = "https://github.com/aatxe/markov"
 readme = "README.md"
 
 [dependencies]
-getopts = { version = "*", optional = true }
-rand = "*"
+getopts = { version = "0.2", optional = true }
+rand = "0.3"
