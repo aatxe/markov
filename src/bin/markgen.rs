@@ -36,7 +36,7 @@ fn main() {
 /// `markov_gen(vec!["test".to_owned(), "-o".to_owned(), "3".to_owned()])`
 /// `markov_gen(vec!["-o".to_owned(), "0".to_owned()], "test".to_owned())`
 #[cfg(feature = "getopts")]
-fn markov_gen(args: Vec<String>) -> Vec<String> {
+fn markov_gen(args: Vec<String>) -> Vec<String>{
     let mut opts = Options::new();
     opts.optopt("n", "count", "set the number of phrases to generate", "COUNT");
     opts.optopt("o", "order", "set the order of the Markov chain", "ORDER");
@@ -72,7 +72,7 @@ fn markov_gen(args: Vec<String>) -> Vec<String> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(feature = "getopts", test))]
 mod test {
     use super::markov_gen;
     use std::borrow::ToOwned;

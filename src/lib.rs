@@ -87,9 +87,7 @@ impl<T> Chain<T> where T: Chainable {
         }));
         toks.push(None);
         for p in toks.windows(self.order + 1) {
-            if !self.map.contains_key(&p[0..self.order].to_vec()) {
-                self.map.insert(p[0..self.order].to_vec(), HashMap::new());
-            }
+            self.map.entry(p[0..self.order].to_vec()).or_insert_with(HashMap::new);
             self.map.get_mut(&p[0..self.order].to_vec()).unwrap().add(p[self.order].clone());
         }
         self
@@ -144,12 +142,12 @@ impl<T> Chain<T> where T: Chainable {
 impl Chain<String> {
     /// Feeds a string of text into the chain.
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
-        self.feed(string.split(" ").map(|s| s.to_owned()).collect())
+        self.feed(string.split(' ').map(|s| s.to_owned()).collect())
     }
 
     /// Feeds a properly formatted file into the chain. This file should be formatted such that
     /// each line is a new sentence. Punctuation may be included if it is desired.
-    pub fn feed_file(&mut self, path: &Path) -> &mut Chain<String> {
+    pub fn feed_file<P: AsRef<Path>>(&mut self, path: P) -> &mut Chain<String> {
         let reader = BufReader::new(File::open(path).unwrap());
         for line in reader.lines() {
             let line = line.unwrap();
