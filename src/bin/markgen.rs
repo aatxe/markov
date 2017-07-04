@@ -1,7 +1,7 @@
 #[cfg(feature = "getopts")] extern crate getopts;
 #[cfg(feature = "getopts")] extern crate markov;
 
-#[cfg(feature = "getopts")] use std::env::args;
+#[cfg(all(feature = "getopts", not(test)))] use std::env::args;
 #[cfg(feature = "getopts")] use std::path::Path;
 #[cfg(feature = "getopts")] use getopts::Options;
 #[cfg(feature = "getopts")] use markov::Chain;
