@@ -1,7 +1,7 @@
 #[cfg(feature = "getopts")] extern crate getopts;
 #[cfg(feature = "getopts")] extern crate markov;
 
-#[cfg(feature = "getopts")] use std::env::args;
+#[cfg(all(feature = "getopts", not(test)))] use std::env::args;
 #[cfg(feature = "getopts")] use std::path::Path;
 #[cfg(feature = "getopts")] use getopts::Options;
 #[cfg(feature = "getopts")] use markov::Chain;
@@ -97,19 +97,19 @@ mod test {
     }
 
     #[test]
-    #[should_panic(message = "No files were fed into the chain.")]
+    #[should_panic(expected = "No files were fed into the chain.")]
     fn gen_invalid_no_files() {
         markov_gen(vec!["prog".to_owned(), "-n".to_owned(), "3".to_owned()]);
     }
 
     #[test]
-    #[should_panic(message = "Expected positive integer argument to -n, found 0.")]
+    #[should_panic(expected = "Expected positive integer argument to -n, found 0.")]
     fn gen_invalid_n_arg_zero() {
         markov_gen(vec!["prog".to_owned(), "test".to_owned(), "-n".to_owned(), "0".to_owned()]);
     }
 
     #[test]
-    #[should_panic(message = "Expected positive integer argument to -n, found test.")]
+    #[should_panic(expected = "Expected positive integer argument to -n, found test.")]
     fn gen_invalid_n_arg_string() {
         markov_gen(vec!["prog".to_owned(), "test".to_owned(), "-n".to_owned(), "test".to_owned()]);
     }

@@ -5,9 +5,9 @@ language: rust
 sudo: false
 script:
   - cargo build --verbose
+  - cargo clean     # without this, the `cargo test` line fails with "multiple candidates for 'markov'" error
   - cargo build --verbose --features "getopts"
   - cargo test --verbose --features "getopts"
-  - rustdoc --test README.md -L target
   - cargo doc --verbose
 notifications:
   email: false
