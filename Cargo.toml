@@ -13,3 +13,9 @@ readme = "README.md"
 [dependencies]
 getopts = { version = "0.2", optional = true }
 rand = "0.3"
+
+[build-dependencies]
+skeptic = "0.10.0"
+
+[dev-dependencies]
+skeptic = "0.10.0"
