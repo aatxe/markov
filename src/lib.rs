@@ -20,12 +20,12 @@
 //! ```
 #![warn(missing_docs)]
 
-extern crate rand;
+extern crate itertools;
 extern crate petgraph;
+extern crate rand;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
-extern crate itertools;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;

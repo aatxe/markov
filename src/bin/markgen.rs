@@ -3,6 +3,7 @@
 
 #[cfg(all(feature = "getopts", not(test)))] use std::env::args;
 #[cfg(feature = "getopts")] use std::path::Path;
+
 #[cfg(feature = "getopts")] use getopts::Options;
 #[cfg(feature = "getopts")] use markov::Chain;
 
