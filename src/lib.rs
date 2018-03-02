@@ -21,6 +21,7 @@
 #![warn(missing_docs)]
 
 extern crate rand;
+extern crate petgraph;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
@@ -32,6 +33,7 @@ use std::io::prelude::*;
 use std::iter::Map;
 use std::path::Path;
 use rand::{Rng, thread_rng};
+use petgraph::graph::Graph;
 
 /// The definition of all types that can be used in a Chain.
 pub trait Chainable: Eq + Hash + Clone {}
@@ -134,6 +136,52 @@ impl<T> Chain<T> where T: Chainable {
     /// Produces an iterator for the specified number of generated token collections.
     pub fn iter_for(&self, size: usize) -> SizedChainIterator<T> {
         SizedChainIterator { chain: self, size: size }
+    }
+
+    /// Create the markov chain graph
+    pub fn graph(&self) -> Graph<Vec<Token<T>>, f64> {
+        let mut graph = Graph::new();
+
+        // create all possible node
+        // and store indices into hashmap
+        let state_map = self.map.iter()
+            .flat_map(|(state, nexts)| {
+                let mut states = vec!(state.clone());
+
+                let mut state = state.clone();
+                state.remove(0);
+
+                for next in nexts {
+                    let mut next_state = state.clone();
+                    next_state.push(next.0.clone());
+                    states.push(next_state);
+                }
+
+                states
+            })
+            .map(|state| (state.clone(), graph.add_node(state)))
+            .collect::<HashMap<_, _>>();
+
+        // create all edges
+        self.map.iter()
+            .flat_map(|(state, nexts)| {
+                let sum = nexts.iter()
+                    .map(|(_, p)| p)
+                    .sum::<usize>() as f64;
+
+                nexts.iter()
+                    .map(|(next, p)| (state.clone(), next.clone(), *p as f64 / sum))
+                    .collect::<Vec<_>>()
+            })
+            .for_each(|(state, next, p)| {
+                let mut next_state = state.clone();
+                next_state.remove(0);
+                next_state.push(next.clone());
+
+                graph.add_edge(state_map[&state], state_map[&next_state], p);
+            });
+
+        graph
     }
 }
 
