@@ -22,6 +22,9 @@
 
 extern crate rand;
 extern crate petgraph;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
@@ -34,6 +37,8 @@ use std::iter::Map;
 use std::path::Path;
 use rand::{Rng, thread_rng};
 use petgraph::graph::Graph;
+use serde::ser::{Serialize, Serializer};
+use serde::de::{Deserialize, Deserializer};
 
 /// The definition of all types that can be used in a Chain.
 pub trait Chainable: Eq + Hash + Clone {}
@@ -47,6 +52,51 @@ type Token<T> = Option<T>;
 pub struct Chain<T> where T: Chainable {
     map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
     order: usize,
+}
+
+impl<T> Serialize for Chain<T>
+    where T: Chainable + Serialize
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        #[derive(Serialize)]
+        struct Chain<'a, T>
+            where T: 'a + Chainable + Serialize
+        {
+            map: &'a HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
+            order: &'a usize,
+        }
+
+        let chain = Chain {
+            map: &self.map,
+            order: &self.order,
+        };
+
+        chain.serialize(serializer)
+    }
+}
+
+impl<'de, T> Deserialize<'de> for Chain<T>
+    where T: Chainable + Deserialize<'de>
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        struct Chain<T>
+            where T: Chainable
+        {
+            map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
+            order: usize,
+        }
+
+        let chain = Chain::deserialize(deserializer)?;
+        Ok(self::Chain {
+            map: chain.map,
+            order: chain.order,
+        })
+    }
 }
 
 impl<T> Chain<T> where T: Chainable {
