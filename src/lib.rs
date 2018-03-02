@@ -20,7 +20,9 @@
 //! ```
 #![warn(missing_docs)]
 
+#[cfg(feature = "graph")]
 extern crate itertools;
+#[cfg(feature = "graph")]
 extern crate petgraph;
 extern crate rand;
 #[macro_use]
@@ -141,7 +143,8 @@ impl<T> Chain<T> where T: Chainable {
         SizedChainIterator { chain: self, size: size }
     }
 
-    /// Create the markov chain graph
+    /// Create a graph using `petgraph` from the markov chain.
+    #[cfg(feature = "graph")]
     pub fn graph(&self) -> Graph<Vec<Token<T>>, f64> {
         let mut graph = Graph::new();
 
@@ -266,7 +269,6 @@ impl<'a, T> Iterator for SizedChainIterator<'a, T> where T: Chainable + 'a {
         (self.size, Some(self.size))
     }
 }
-
 
 /// An infinite iterator over a Markov chain of strings.
 pub type InfiniteChainStringIterator<'a> =
