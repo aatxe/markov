@@ -38,8 +38,6 @@ use std::iter::Map;
 use std::path::Path;
 use rand::{Rng, thread_rng};
 use petgraph::graph::Graph;
-use serde::ser::{Serialize, Serializer};
-use serde::de::{Deserialize, Deserializer};
 use itertools::Itertools;
 
 /// The definition of all types that can be used in a Chain.
@@ -50,55 +48,10 @@ type Token<T> = Option<T>;
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
 /// uses HashMaps internally, and so Eq and Hash are both required.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Serialize, Deserialize)]
 pub struct Chain<T> where T: Chainable {
     map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
     order: usize,
-}
-
-impl<T> Serialize for Chain<T>
-    where T: Chainable + Serialize
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer
-    {
-        #[derive(Serialize)]
-        struct Chain<'a, T>
-            where T: 'a + Chainable + Serialize
-        {
-            map: &'a HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
-            order: &'a usize,
-        }
-
-        let chain = Chain {
-            map: &self.map,
-            order: &self.order,
-        };
-
-        chain.serialize(serializer)
-    }
-}
-
-impl<'de, T> Deserialize<'de> for Chain<T>
-    where T: Chainable + Deserialize<'de>
-{
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>
-    {
-        #[derive(Deserialize)]
-        struct Chain<T>
-            where T: Chainable
-        {
-            map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
-            order: usize,
-        }
-
-        let chain = Chain::deserialize(deserializer)?;
-        Ok(self::Chain {
-            map: chain.map,
-            order: chain.order,
-        })
-    }
 }
 
 impl<T> Chain<T> where T: Chainable {
@@ -192,45 +145,38 @@ impl<T> Chain<T> where T: Chainable {
     pub fn graph(&self) -> Graph<Vec<Token<T>>, f64> {
         let mut graph = Graph::new();
 
-        // create all possible node
-        // and store indices into hashmap
-        let state_map = self.map.iter()
-            .flat_map(|(state, nexts)| {
-                let mut states = vec!(state.clone());
+        // Create all possible node and store indices into hashmap.
+        let state_map = self.map.iter().flat_map(|(state, nexts)| {
+            let mut states = vec!(state.clone());
 
-                let mut state = state.clone();
-                state.remove(0);
+            let mut state = state.clone();
+            state.remove(0);
 
-                for next in nexts {
-                    let mut next_state = state.clone();
-                    next_state.push(next.0.clone());
-                    states.push(next_state);
-                }
+            for next in nexts {
+                let mut next_state = state.clone();
+                next_state.push(next.0.clone());
+                states.push(next_state);
+            }
 
-                states
-            })
-            .unique()
+            states
+        }).unique()
             .map(|state| (state.clone(), graph.add_node(state)))
             .collect::<HashMap<_, _>>();
 
-        // create all edges
-        self.map.iter()
-            .flat_map(|(state, nexts)| {
-                let sum = nexts.iter()
-                    .map(|(_, p)| p)
-                    .sum::<usize>() as f64;
+        // Create all edges, and add them to the graph.
+        self.map.iter().flat_map(|(state, nexts)| {
+            let sum = nexts.iter().map(|(_, p)| p).sum::<usize>() as f64;
 
-                nexts.iter()
-                    .map(|(next, p)| (state.clone(), next.clone(), *p as f64 / sum))
-                    .collect::<Vec<_>>()
-            })
-            .for_each(|(state, next, p)| {
-                let mut next_state = state.clone();
-                next_state.remove(0);
-                next_state.push(next.clone());
+            nexts.iter()
+                .map(|(next, p)| (state.clone(), next.clone(), *p as f64 / sum))
+                .collect::<Vec<_>>()
+        }).for_each(|(state, next, p)| {
+            let mut next_state = state.clone();
+            next_state.remove(0);
+            next_state.push(next.clone());
 
-                graph.add_edge(state_map[&state], state_map[&next_state], p);
-            });
+            graph.add_edge(state_map[&state], state_map[&next_state], p);
+        });
 
         graph
     }
