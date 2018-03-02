@@ -50,7 +50,6 @@ fn markov_gen(args: Vec<String>) -> Vec<String>{
         print!("{}", opts.usage(&brief));
         Vec::new()
     } else {
-        let mut chain: Chain<String> = Chain::new();
         let count = match matches.opt_str("n") {
             Some(arg) => match arg.parse() {
                 Ok(n) if n > 0 => n,
@@ -58,12 +57,13 @@ fn markov_gen(args: Vec<String>) -> Vec<String>{
             },
             None => 1
         };
-        if let Some(arg) = matches.opt_str("o") {
-            match arg.parse() {
-                Ok(n) if n > 0 => { chain.order(n); },
-                _ => panic!("Expected positive integer argument to -n, found {}.", &arg),
-            }
-        }
+        let mut chain = match matches.opt_str("o").map(|arg| arg.parse()) {
+            Some(Ok(n)) if n > 0 => Chain::new_with_order(n),
+            None => Chain::new(),
+            Some(_) => panic!(
+                "Expected positive integer argument to -n, found {}.", matches.opt_str("o").unwrap()
+            ),
+        };
         for path in matches.free.iter() {
             chain.feed_file(Path::new(&path));
         }
