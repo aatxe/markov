@@ -102,23 +102,21 @@ impl<'de, T> Deserialize<'de> for Chain<T>
 impl<T> Chain<T> where T: Chainable {
     /// Constructs a new Markov chain.
     pub fn new() -> Chain<T> {
-        Chain {
-            map: {
-                let mut map = HashMap::new();
-                map.insert(vec!(None; 1), HashMap::new());
-                map
-            },
-            order: 1,
-        }
+        Self::new_with_order(1)
     }
 
     /// Choose a specific Markov chain order. The order is the number of previous tokens to use
     /// as the index into the map.
-    pub fn order(&mut self, order: usize) -> &mut Chain<T> {
+    pub fn new_with_order(order: usize) -> Chain<T> {
         assert!(order > 0);
-        self.order = order;
-        self.map.insert(vec!(None; self.order), HashMap::new());
-        self
+        Chain {
+            map: {
+                let mut map = HashMap::new();
+                map.insert(vec!(None; order), HashMap::new());
+                map
+            },
+            order,
+        }
     }
 
     /// Determines whether or not the chain is empty. A chain is considered empty if nothing has
@@ -405,8 +403,7 @@ mod test {
 
     #[test]
     fn generate_for_higher_order() {
-        let mut chain = Chain::new();
-        chain.order(2);
+        let mut chain = Chain::new_with_order(2);
         chain.feed(vec![3u8, 5, 10]).feed(vec![2, 3, 5, 12]);
         let v = chain.generate();
         assert!([vec![3, 5, 10], vec![3, 5, 12], vec![2, 3, 5, 10], vec![2, 3, 5, 12]].contains(&v));
