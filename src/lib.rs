@@ -1,5 +1,5 @@
-//! A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
-//! uses HashMaps internally, and so Eq and Hash are both required.
+//! A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type.
+//! In particular, elements of the chain must be `Eq`, `Hash`, and `Clone`.
 //!
 //! # Examples
 //!
@@ -42,14 +42,14 @@ use rand::{Rng, thread_rng};
 use petgraph::graph::Graph;
 use itertools::Itertools;
 
-/// The definition of all types that can be used in a Chain.
+/// The definition of all types that can be used in a `Chain`.
 pub trait Chainable: Eq + Hash + Clone {}
 impl<T> Chainable for T where T: Eq + Hash + Clone {}
 
 type Token<T> = Option<T>;
 
-/// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type. This
-/// uses HashMaps internally, and so Eq and Hash are both required.
+/// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type.
+/// In particular, elements of the chain must be `Eq`, `Hash`, and `Clone`.
 #[derive(PartialEq, Debug, Serialize, Deserialize)]
 pub struct Chain<T> where T: Chainable {
     map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
@@ -62,9 +62,11 @@ impl<T> Chain<T> where T: Chainable {
         Self::new_with_order(1)
     }
 
-    /// Choose a specific Markov chain order. The order is the number of previous tokens to use
-    /// as the index into the map.
-    pub fn new_with_order(order: usize) -> Chain<T> {
+    /// Creates a new Markov chain of the specified order. The order is the number of previous
+    /// tokens to use for each mapping in the chain. Higher orders mean that the generated text
+    /// will more closely resemble the training set. Increasing the order can yield more realistic
+    /// output, but typically at the cost of requiring more training data.
+    pub fn of_order(order: usize) -> Chain<T> {
         assert!(order > 0);
         Chain {
             map: {
@@ -83,7 +85,7 @@ impl<T> Chain<T> where T: Chainable {
     }
 
 
-    /// Feeds the chain a collection of tokens. This operation is O(n) where n is the number of
+    /// Feeds the chain a collection of tokens. This operation is `O(n)` where `n` is the number of
     /// tokens to be fed into the chain.
     pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
         if tokens.is_empty() { return self }
@@ -99,8 +101,8 @@ impl<T> Chain<T> where T: Chainable {
         self
     }
 
-    /// Generates a collection of tokens from the chain. This operation is O(mn) where m is the
-    /// length of the generated collection, and n is the number of possible states from a given
+    /// Generates a collection of tokens from the chain. This operation is `O(mn)` where `m` is the
+    /// length of the generated collection, and `n` is the number of possible states from a given
     /// state.
     pub fn generate(&self) -> Vec<T> {
         let mut ret = Vec::new();
@@ -206,7 +208,7 @@ impl Chain<String> {
         self
     }
 
-    /// Converts the output of generate(...) on a String chain to a single String.
+    /// Converts the output of `generate(...)` on a String chain to a single String.
     fn vec_to_string(vec: Vec<String>) -> String {
         let mut ret = String::new();
         for s in &vec {

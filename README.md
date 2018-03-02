@@ -1,12 +1,21 @@
-# markov [![Build Status](https://travis-ci.org/aatxe/markov.svg?branch=master)](https://travis-ci.org/aatxe/markov) [![Crates.io](https://img.shields.io/crates/v/markov.svg)](https://crates.io/crates/markov) #
+# markov [![Build Status][ci-badge]][ci] [![Crates.io][cr-badge]][cr] [![Docs][doc-badge]][doc] [![Built with Spacemacs][bws]][sm]
 
-A generic implementation of a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) in Rust. 
-Documentation can be found online [here](https://docs.rs/markov/0.0.33/markov/).
+[ci-badge]: https://travis-ci.org/aatxe/markov.svg
+[ci]: https://travis-ci.org/aatxe/markov
+[cr-badge]: https://img.shields.io/crates/v/markov.svg
+[cr]: https://crates.io/crates/markov
+[doc-badge]: https://docs.rs/markov/badge.svg
+[doc]: https://docs.rs/markov
+[bws]: https://cdn.rawgit.com/syl20bnr/spacemacs/442d025779da2f62fc86c2082703697714db6514/assets/spacemacs-badge.svg
+[sm]: http://spacemacs.org
+
+A generic implementation of a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) in Rust.
+You can find up-to-date, ready-to-use documentation online [on docs.rs][doc].
 
 ## Examples ##
 
 With Strings: 
-```rust
+```rust,no_run
 extern crate markov;
 
 use markov::Chain;
@@ -19,7 +28,7 @@ fn main() {
 ```
 
 With integers:
-```rust
+```rust,no_run
 extern crate markov;
 
 use markov::Chain;
@@ -32,13 +41,28 @@ fn main() {
 ```
 
 Chains have iterators (both infinite and sized!):
-```rust
+```rust,no_run
 extern crate markov;
 
 use markov::Chain;
 
 fn main() {
     let mut chain = Chain::new();
+    chain.feed_str("I like cats and I like dogs.");
+    for line in chain.iter_for(5) {
+        println!("{:?}", line);
+    }
+}
+```
+
+Chains can be higher-order:
+```rust,no_run
+extern crate markov;
+
+use markov::Chain;
+
+fn main() {
+    let mut chain = Chain::of_order(2);
     chain.feed_str("I like cats and I like dogs.");
     for line in chain.iter_for(5) {
         println!("{:?}", line);
