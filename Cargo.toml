@@ -12,11 +12,11 @@ readme = "README.md"
 
 [dependencies]
 getopts = { version = "0.2", optional = true }
-rand = "0.3"
+itertools = "0.7"
 petgraph = "0.4"
+rand = "0.3"
 serde = "1.0"
 serde_derive = "1.0"
-itertools = "0.7"
 
 [build-dependencies]
 skeptic = "0.10.0"
