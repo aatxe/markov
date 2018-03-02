@@ -38,9 +38,12 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::iter::Map;
 use std::path::Path;
-use rand::{Rng, thread_rng};
-use petgraph::graph::Graph;
+
+#[cfg(feature = "graph")]
 use itertools::Itertools;
+#[cfg(feature = "graph")]
+use petgraph::graph::Graph;
+use rand::{Rng, thread_rng};
 
 /// The definition of all types that can be used in a `Chain`.
 pub trait Chainable: Eq + Hash + Clone {}
