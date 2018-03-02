@@ -25,6 +25,7 @@ extern crate petgraph;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+extern crate itertools;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
@@ -39,6 +40,7 @@ use rand::{Rng, thread_rng};
 use petgraph::graph::Graph;
 use serde::ser::{Serialize, Serializer};
 use serde::de::{Deserialize, Deserializer};
+use itertools::Itertools;
 
 /// The definition of all types that can be used in a Chain.
 pub trait Chainable: Eq + Hash + Clone {}
@@ -207,6 +209,7 @@ impl<T> Chain<T> where T: Chainable {
 
                 states
             })
+            .unique()
             .map(|state| (state.clone(), graph.add_node(state)))
             .collect::<HashMap<_, _>>();
 
