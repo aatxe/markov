@@ -1,5 +1,5 @@
 /target
 /Cargo.lock
-*.json
+*.yaml
 log
 tswift_1989
