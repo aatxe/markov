@@ -25,16 +25,20 @@ extern crate itertools;
 #[cfg(feature = "graph")]
 extern crate petgraph;
 extern crate rand;
+extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
+#[cfg(feature = "yaml")]
+extern crate serde_yaml;
 
 use std::borrow::ToOwned;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::fs::File;
 use std::hash::Hash;
-use std::io::BufReader;
+use std::io::{BufReader, Result};
+#[cfg(feature = "yaml")]
+use std::io::{Error, ErrorKind};
 use std::io::prelude::*;
 use std::iter::Map;
 use std::path::Path;
@@ -44,6 +48,12 @@ use itertools::Itertools;
 #[cfg(feature = "graph")]
 use petgraph::graph::Graph;
 use rand::{Rng, thread_rng};
+#[cfg(feature = "yaml")]
+use serde::Serialize;
+#[cfg(feature = "yaml")]
+use serde::de::DeserializeOwned;
+#[cfg(feature = "yaml")]
+use serde_yaml as yaml;
 
 /// The definition of all types that can be used in a `Chain`.
 pub trait Chainable: Eq + Hash + Clone {}
@@ -62,7 +72,7 @@ pub struct Chain<T> where T: Chainable {
 impl<T> Chain<T> where T: Chainable {
     /// Constructs a new Markov chain.
     pub fn new() -> Chain<T> {
-        Self::new_with_order(1)
+        Self::of_order(1)
     }
 
     /// Creates a new Markov chain of the specified order. The order is the number of previous
@@ -70,14 +80,14 @@ impl<T> Chain<T> where T: Chainable {
     /// will more closely resemble the training set. Increasing the order can yield more realistic
     /// output, but typically at the cost of requiring more training data.
     pub fn of_order(order: usize) -> Chain<T> {
-        assert!(order > 0);
+        assert!(order != 0);
         Chain {
             map: {
                 let mut map = HashMap::new();
                 map.insert(vec!(None; order), HashMap::new());
                 map
             },
-            order,
+            order: order,
         }
     }
 
@@ -190,6 +200,33 @@ impl<T> Chain<T> where T: Chainable {
     }
 }
 
+#[cfg(feature = "yaml")]
+impl<T> Chain<T> where T: Chainable + Serialize {
+    /// Saves the current chain to the specified path.
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let mut file = File::create(&path)?;
+        let data = yaml::to_string(self).map_err(|e| {
+            Error::new(ErrorKind::InvalidData, e)
+        })?;
+        file.write_all(data.as_bytes())?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "yaml")]
+impl<T> Chain<T> where T: Chainable + DeserializeOwned {
+    /// Loads a chain from the specified path.
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Chain<T>> {
+        let mut file = File::open(&path)?;
+        let mut data = String::new();
+        file.read_to_string(&mut data)?;
+
+        yaml::from_str(&data).map_err(|e| {
+            Error::new(ErrorKind::InvalidInput, e)
+        })
+    }
+}
+
 impl Chain<String> {
     /// Feeds a string of text into the chain.
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
@@ -198,17 +235,17 @@ impl Chain<String> {
 
     /// Feeds a properly formatted file into the chain. This file should be formatted such that
     /// each line is a new sentence. Punctuation may be included if it is desired.
-    pub fn feed_file<P: AsRef<Path>>(&mut self, path: P) -> &mut Chain<String> {
-        let reader = BufReader::new(File::open(path).unwrap());
+    pub fn feed_file<P: AsRef<Path>>(&mut self, path: P) -> Result<&mut Chain<String>> {
+        let reader = BufReader::new(File::open(path)?);
         for line in reader.lines() {
-            let line = line.unwrap();
+            let line = line?;
             let words = line.split_whitespace()
                             .filter(|word| !word.is_empty())
                             .map(|s| s.to_owned())
                             .collect();
             self.feed(words);
         }
-        self
+        Ok(self)
     }
 
     /// Converts the output of `generate(...)` on a String chain to a single String.
@@ -359,7 +396,7 @@ mod test {
 
     #[test]
     fn generate_for_higher_order() {
-        let mut chain = Chain::new_with_order(2);
+        let mut chain = Chain::of_order(2);
         chain.feed(vec![3u8, 5, 10]).feed(vec![2, 3, 5, 12]);
         let v = chain.generate();
         assert!([vec![3, 5, 10], vec![3, 5, 12], vec![2, 3, 5, 10], vec![2, 3, 5, 12]].contains(&v));
@@ -378,7 +415,7 @@ mod test {
         let mut chain = Chain::new();
         chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
         let v: Vec<_> = chain.generate_from_token(9);
-        assert_eq!(v, vec![]);
+        assert!(v.is_empty());
     }
 
     #[test]
@@ -434,5 +471,16 @@ mod test {
         let mut chain = Chain::new();
         chain.feed_str("I like cats and I like dogs");
         assert_eq!(chain.str_iter_for(5).collect::<Vec<_>>().len(), 5);
+    }
+
+    #[test]
+    #[cfg(feature = "yaml")]
+    fn save_then_load() {
+        let mut chain = Chain::of_order(2);
+        chain.feed_str("I like cats and I like dogs");
+        chain.save("test.yaml").unwrap();
+
+        let new_chain = Chain::load("test.yaml").unwrap();
+        assert_eq!(chain, new_chain);
     }
 }

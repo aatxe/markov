@@ -13,9 +13,10 @@ readme = "README.md"
 travis-ci = { repository = "aatxe/markov" }
 
 [features]
-default = ["markgen", "graph"]
+default = ["graph", "markgen", "yaml"]
 graph = ["petgraph", "itertools"]
 markgen = ["getopts"]
+yaml = ["serde_yaml"]
 
 [dependencies]
 getopts = { version = "0.2", optional = true }
@@ -24,3 +25,4 @@ petgraph = { version = "0.4", optional = true }
 rand = "0.3"
 serde = "1.0"
 serde_derive = "1.0"
+serde_yaml = { version = "0.7", optional = true }

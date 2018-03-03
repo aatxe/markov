@@ -4,7 +4,7 @@ extern crate petgraph;
 
 #[cfg(feature = "graph")]
 fn main() {
-    let mut chain = markov::Chain::new_with_order(2);
+    let mut chain = markov::Chain::of_order(2);
     chain.feed(vec!('e', 'r', 't', 'r', 't', 'y', 'r', 't', 'e', 'r', 't', 'y', 't', 'r'));
     let graph = chain.graph();
 

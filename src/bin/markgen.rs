@@ -59,14 +59,14 @@ fn markov_gen(args: Vec<String>) -> Vec<String>{
             None => 1
         };
         let mut chain = match matches.opt_str("o").map(|arg| arg.parse()) {
-            Some(Ok(n)) if n > 0 => Chain::new_with_order(n),
+            Some(Ok(n)) if n > 0 => Chain::of_order(n),
             None => Chain::new(),
             Some(_) => panic!(
                 "Expected positive integer argument to -n, found {}.", matches.opt_str("o").unwrap()
             ),
         };
         for path in matches.free.iter() {
-            chain.feed_file(Path::new(&path));
+            chain.feed_file(Path::new(&path)).unwrap();
         }
         if chain.is_empty() { panic!("No files were fed into the chain.") }
         chain.str_iter_for(count).collect()
