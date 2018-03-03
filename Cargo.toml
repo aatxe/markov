@@ -1,6 +1,6 @@
 [package]
 name = "markov"
-version = "0.0.33"
+version = "1.0.0"
 description = "A generic markov chain implementation in Rust."
 authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
 license = "CC0-1.0"
@@ -8,8 +8,15 @@ keywords = ["markov", "chain", "probability"]
 documentation = "https://docs.rs/markov/"
 repository = "https://github.com/aatxe/markov"
 readme = "README.md"
+exclude = [
+    "conquest_of_bread",
+    "jabberwocky",
+    "koran",
+    "test",
+]
 
 [badges]
+maintenance = { status = "passively-maintained" }
 travis-ci = { repository = "aatxe/markov" }
 
 [features]

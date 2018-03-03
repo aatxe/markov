@@ -9,8 +9,15 @@
 [bws]: https://cdn.rawgit.com/syl20bnr/spacemacs/442d025779da2f62fc86c2082703697714db6514/assets/spacemacs-badge.svg
 [sm]: http://spacemacs.org
 
-A generic implementation of a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) in Rust.
-You can find up-to-date, ready-to-use documentation online [on docs.rs][doc].
+A generic implementation of a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) in Rust. It
+supports all types that implement `Eq`, `Hash`, and `Clone`, and has some specific helpers for
+working with `String` as text generation is the most likely use case. You can find up-to-date,
+ready-to-use documentation online [on docs.rs][doc].
+
+__Note__: `markov` is in passive maintenance mode. It should work well for its intended use case
+(largely textual generation, especially in chat bots and the like), but will likely not grow to any
+further use cases. If it does not meet your needs in a broad sense, you should likely fork it or
+develop a more purpose-built library. Nevertheless, bug reports will still be triaged and fixed.
 
 ## Examples ##
 
