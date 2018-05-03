@@ -41,6 +41,7 @@ fn markov_gen(args: Vec<String>) -> Vec<String>{
     let mut opts = Options::new();
     opts.optopt("n", "count", "set the number of phrases to generate", "COUNT");
     opts.optopt("o", "order", "set the order of the Markov chain", "ORDER");
+    opts.optopt("s", "save", "save the Markov chain to the specified path", "PATH");
     opts.optflag("h", "help", "print this help menu");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -69,6 +70,9 @@ fn markov_gen(args: Vec<String>) -> Vec<String>{
             chain.feed_file(Path::new(&path)).unwrap();
         }
         if chain.is_empty() { panic!("No files were fed into the chain.") }
+        if let Some(path) = matches.opt_str("s") {
+            chain.save(path).unwrap();
+        }
         chain.str_iter_for(count).collect()
     }
 }
