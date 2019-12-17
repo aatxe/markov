@@ -42,7 +42,7 @@ use markov::Chain;
 
 fn main() {
     let mut chain = Chain::new();
-    chain.feed(vec![1u8, 2, 3, 5]).feed(vec![3u8, 9, 2]);
+    chain.feed(vec![1u8, 2, 3, 5]).feed([3u8, 9, 2]);
     println!("{:?}", chain.generate());
 }
 ```

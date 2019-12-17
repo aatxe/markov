@@ -15,7 +15,7 @@
 //! use markov::Chain;
 //!
 //! let mut chain = Chain::new();
-//! chain.feed(vec![1u8, 2, 3, 5]).feed(vec![3u8, 9, 2]);
+//! chain.feed(vec![1u8, 2, 3, 5]).feed([3u8, 9, 2]);
 //! println!("{:?}", chain.generate());
 //! ```
 #![warn(missing_docs)]
@@ -100,11 +100,12 @@ impl<T> Chain<T> where T: Chainable {
 
     /// Feeds the chain a collection of tokens. This operation is `O(n)` where `n` is the number of
     /// tokens to be fed into the chain.
-    pub fn feed(&mut self, tokens: Vec<T>) -> &mut Chain<T> {
+    pub fn feed<S: AsRef<[T]>>(&mut self, tokens: S) -> &mut Chain<T> {
+        let tokens = tokens.as_ref();
         if tokens.is_empty() { return self }
         let mut toks = vec!(None; self.order);
-        toks.extend(tokens.into_iter().map(|token| {
-            Some(token)
+        toks.extend(tokens.iter().map(|token| {
+            Some(token.clone())
         }));
         toks.push(None);
         for p in toks.windows(self.order + 1) {
@@ -230,7 +231,7 @@ impl<T> Chain<T> where T: Chainable + DeserializeOwned {
 impl Chain<String> {
     /// Feeds a string of text into the chain.
     pub fn feed_str(&mut self, string: &str) -> &mut Chain<String> {
-        self.feed(string.split(' ').map(|s| s.to_owned()).collect())
+        self.feed(&string.split(' ').map(|s| s.to_owned()).collect::<Vec<_>>())
     }
 
     /// Feeds a properly formatted file into the chain. This file should be formatted such that
@@ -242,8 +243,8 @@ impl Chain<String> {
             let words = line.split_whitespace()
                             .filter(|word| !word.is_empty())
                             .map(|s| s.to_owned())
-                            .collect();
-            self.feed(words);
+                            .collect::<Vec<_>>();
+            self.feed(&words);
         }
         Ok(self)
     }
