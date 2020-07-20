@@ -136,9 +136,10 @@ impl<T> Chain<T> where T: Chainable {
     /// of possible states from a given state. This returns an empty vector if the token is not
     /// found.
     pub fn generate_from_token(&self, token: T) -> Vec<T> {
-        if !self.map.contains_key(&vec!(Some(token.clone()); self.order)) { return Vec::new() }
+        let mut curs = vec!(None; self.order - 1);
+        curs.push(Some(token.clone()));
+        if !self.map.contains_key(&curs) { return Vec::new() }
         let mut ret = vec![token.clone()];
-        let mut curs = vec!(Some(token.clone()); self.order);
         loop {
             let next = self.map[&curs].next();
             curs = curs[1..self.order].to_vec();
@@ -450,6 +451,14 @@ mod test {
     fn generate_str_from_token() {
         let mut chain = Chain::new();
         chain.feed_str("I like cats").feed_str("cats are cute");
+        assert!(["cats", "cats are cute"].contains(&&chain.generate_str_from_token("cats")[..]));
+    }
+
+    #[test]
+    fn generate_str_from_token_higher_order() {
+        let mut chain = Chain::of_order(2);
+        chain.feed_str("I like cats").feed_str("cats are cute");
+        println!("{:?}", chain.generate_str_from_token("cats"));
         assert!(["cats", "cats are cute"].contains(&&chain.generate_str_from_token("cats")[..]));
     }
 
