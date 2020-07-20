@@ -2,7 +2,7 @@
 name = "markov"
 version = "1.0.4"
 description = "A generic markov chain implementation in Rust."
-authors = ["Aaron Weiss <aaronweiss74@gmail.com>"]
+authors = ["Aaron Weiss <aweiss@hey.com>"]
 license = "CC0-1.0"
 keywords = ["markov", "chain", "probability"]
 documentation = "https://docs.rs/markov/"
