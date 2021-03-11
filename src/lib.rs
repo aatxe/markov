@@ -150,6 +150,55 @@ impl<T> Chain<T> where T: Chainable {
         ret
     }
 
+
+    /// Generates a collection of tokens from the chain, starting with the given tokens. This
+    /// operation is O(mn) where m is the length of the generated collection, and n is the number
+    /// of possible states from a given state. If not all tokens are in the chain, this returns
+    /// the first n tokens that are.
+    pub fn generate_from_tokens<S: AsRef<[T]>>(&self, tokens: S) -> Vec<T> {
+        let tokens = tokens.as_ref();
+        if tokens.is_empty() {
+            return vec![];
+        }
+
+        // the current key in the hashmap
+        let mut curs = vec!(None; self.order - 1);
+        curs.push(Some(tokens[0].clone()));
+
+        if !self.map.contains_key(&curs) {
+            return vec![];
+        }
+
+        let mut ret = vec![tokens[0].clone()];
+
+        // walk up to the provided tokens
+        for t in tokens[1..].iter() {
+            let next_states = &self.map[&curs];
+
+            // if full tokens input not in chain, bail & return what we have so far
+            if !next_states.contains_key(&Some(t.to_owned())) {
+                return ret;
+            }
+
+            ret.push(t.to_owned());
+
+            // shift cursor
+            curs = curs[1..curs.len()].to_owned();
+            curs.push(Some(t.to_owned()));
+        }
+
+        // now cursor should be full of the last (self.order) tokens from our input
+
+        while let Some(next) = self.map[&curs].next() {
+            // shift cursor
+            curs = curs[1..self.order].to_owned();
+            curs.push(Some(next.clone()));
+            // add token
+            ret.push(next);
+        }
+        ret
+    }
+
     /// Produces an infinite iterator of generated token collections.
     pub fn iter(&self) -> InfiniteChainIterator<T> {
         InfiniteChainIterator { chain: self }
@@ -273,6 +322,14 @@ impl Chain<String> {
     /// string if the token is not found.
     pub fn generate_str_from_token(&self, string: &str) -> String {
         Chain::vec_to_string(self.generate_from_token(string.to_owned()))
+    }
+
+    /// Generates a random string of text starting with the desired tokens. If the token is not
+    /// found, this returns the string with the first n tokens that were found
+    // pub fn generate_from_tokens<S: AsRef<[T]>>(&self, tokens: S) -> Vec<T> {
+    pub fn generate_str_from_tokens(&self, strings: &[&str]) -> String {
+        let tokens = strings.iter().map(|&s| s.to_owned()).collect::<Vec<_>>();
+        Chain::vec_to_string(self.generate_from_tokens(tokens))
     }
 
     /// Produces an infinite iterator of generated strings.
@@ -421,6 +478,31 @@ mod test {
     }
 
     #[test]
+    fn generate_from_tokens() {
+        let mut chain = Chain::new();
+        chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
+        let v = chain.generate_from_tokens(&vec![3, 5]);
+        assert!([vec![3u8, 5, 10], vec![3u8, 5, 12]].contains(&v));
+    }
+
+    #[test]
+    fn generate_from_tokens_longer() {
+        let mut chain = Chain::of_order(2);
+        chain.feed(vec![1u8, 2, 3, 4, 5]).feed(vec![2, 3, 5, 6]);
+        let v = chain.generate_from_tokens(&vec![1, 2, 3]);
+        assert!([vec![1u8, 2, 3, 4, 5], vec![1u8, 2, 3, 5, 6]].contains(&v));
+    }
+
+
+    #[test]
+    fn generate_from_tokens_unfound() {
+        let mut chain = Chain::new();
+        chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
+        let v = chain.generate_from_tokens(&vec![12, 37]);
+        assert_eq!(vec![12], v);
+    }
+
+    #[test]
     fn iter() {
         let mut chain = Chain::new();
         chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
@@ -467,6 +549,28 @@ mod test {
         let mut chain = Chain::new();
         chain.feed_str("I like cats").feed_str("cats are cute");
         assert_eq!(chain.generate_str_from_token("test"), "");
+    }
+
+    #[test]
+    fn generate_str_from_tokens() {
+        let mut chain = Chain::new();
+        chain.feed_str("I like cats").feed_str("cats are cute").feed_str("cats are nice");
+        assert!(["cats are cute", "cats are nice"].contains(&&chain.generate_str_from_tokens(&["cats", "are"])[..]));
+    }
+
+    #[test]
+    fn generate_str_from_tokens_higher_order() {
+        let mut chain = Chain::of_order(2);
+        chain.feed_str("I like cats").feed_str("cats are cute").feed_str("cats are nice");
+        assert!(["cats are cute", "cats are nice"].contains(&&chain.generate_str_from_tokens(&["cats", "are"])[..]));
+    }
+
+    #[test]
+    fn generate_str_from_tokens_unfound() {
+        let mut chain = Chain::new();
+        chain.feed_str("I like cats").feed_str("cats are cute");
+        assert_eq!(chain.generate_str_from_tokens(&["test"]), "");
+        assert_eq!(chain.generate_str_from_tokens(&["cats", "lick"]), "cats");
     }
 
     #[test]
