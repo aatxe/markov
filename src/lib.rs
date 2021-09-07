@@ -72,6 +72,15 @@ where
     order: usize,
 }
 
+impl<T> Default for Chain<T>
+where
+    T: Chainable,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> Chain<T>
 where
     T: Chainable,
@@ -93,7 +102,7 @@ where
                 map.insert(vec![None; order], HashMap::new());
                 map
             },
-            order: order,
+            order,
         }
     }
 
@@ -155,7 +164,7 @@ where
         if !self.map.contains_key(&curs) {
             return Vec::new();
         }
-        let mut ret = vec![token.clone()];
+        let mut ret = vec![token];
         loop {
             let next = self.map[&curs].next();
             curs = curs[1..self.order].to_vec();
@@ -177,10 +186,7 @@ where
 
     /// Produces an iterator for the specified number of generated token collections.
     pub fn iter_for(&self, size: usize) -> SizedChainIterator<T> {
-        SizedChainIterator {
-            chain: self,
-            size: size,
-        }
+        SizedChainIterator { chain: self, size }
     }
 
     /// Create a graph using `petgraph` from the markov chain.
@@ -224,7 +230,7 @@ where
             .for_each(|(state, next, p)| {
                 let mut next_state = state.clone();
                 next_state.remove(0);
-                next_state.push(next.clone());
+                next_state.push(next);
 
                 graph.add_edge(state_map[&state], state_map[&next_state], p);
             });
@@ -288,8 +294,8 @@ impl Chain<String> {
     fn vec_to_string(vec: Vec<String>) -> String {
         let mut ret = String::new();
         for s in &vec {
-            ret.push_str(&s);
-            ret.push_str(" ");
+            ret.push_str(s);
+            ret.push(' ');
         }
         let len = ret.len();
         if len > 0 {
