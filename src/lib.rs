@@ -403,7 +403,7 @@ where
             sum += value;
         }
         let mut rng = thread_rng();
-        let cap = rng.gen_range(0, sum);
+        let cap = rng.gen_range(0..sum);
         sum = 0;
         for (key, &value) in self.iter() {
             sum += value;
