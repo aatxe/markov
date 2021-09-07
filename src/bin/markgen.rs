@@ -1,15 +1,24 @@
-#[cfg(feature = "getopts")] extern crate getopts;
-#[cfg(feature = "getopts")] extern crate markov;
+#[cfg(feature = "getopts")]
+extern crate getopts;
+#[cfg(feature = "getopts")]
+extern crate markov;
 
-#[cfg(all(feature = "getopts", not(test)))] use std::env::args;
-#[cfg(feature = "getopts")] use std::path::Path;
+#[cfg(all(feature = "getopts", not(test)))]
+use std::env::args;
+#[cfg(feature = "getopts")]
+use std::path::Path;
 
-#[cfg(feature = "getopts")] use getopts::Options;
-#[cfg(feature = "getopts")] use markov::Chain;
+#[cfg(feature = "getopts")]
+use getopts::Options;
+#[cfg(feature = "getopts")]
+use markov::Chain;
 
 #[cfg(all(feature = "getopts", not(test)))]
 fn main() {
-    markov_gen(args().collect()).iter().map(|s| println!("{}", s)).count();
+    markov_gen(args().collect())
+        .iter()
+        .map(|s| println!("{}", s))
+        .count();
 }
 
 #[cfg(all(not(feature = "getopts"), not(test)))]
@@ -37,11 +46,21 @@ fn main() {
 /// `markov_gen(vec!["test".to_owned(), "-o".to_owned(), "3".to_owned()])`
 /// `markov_gen(vec!["-o".to_owned(), "0".to_owned()], "test".to_owned())`
 #[cfg(feature = "getopts")]
-fn markov_gen(args: Vec<String>) -> Vec<String>{
+fn markov_gen(args: Vec<String>) -> Vec<String> {
     let mut opts = Options::new();
-    opts.optopt("n", "count", "set the number of phrases to generate", "COUNT");
+    opts.optopt(
+        "n",
+        "count",
+        "set the number of phrases to generate",
+        "COUNT",
+    );
     opts.optopt("o", "order", "set the order of the Markov chain", "ORDER");
-    opts.optopt("s", "save", "save the Markov chain to the specified path", "PATH");
+    opts.optopt(
+        "s",
+        "save",
+        "save the Markov chain to the specified path",
+        "PATH",
+    );
     opts.optflag("h", "help", "print this help menu");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -57,19 +76,22 @@ fn markov_gen(args: Vec<String>) -> Vec<String>{
                 Ok(n) if n > 0 => n,
                 _ => panic!("Expected positive integer argument to -n, found {}.", &arg),
             },
-            None => 1
+            None => 1,
         };
         let mut chain = match matches.opt_str("o").map(|arg| arg.parse()) {
             Some(Ok(n)) if n > 0 => Chain::of_order(n),
             None => Chain::new(),
             Some(_) => panic!(
-                "Expected positive integer argument to -n, found {}.", matches.opt_str("o").unwrap()
+                "Expected positive integer argument to -n, found {}.",
+                matches.opt_str("o").unwrap()
             ),
         };
         for path in matches.free.iter() {
             chain.feed_file(Path::new(&path)).unwrap();
         }
-        if chain.is_empty() { panic!("No files were fed into the chain.") }
+        if chain.is_empty() {
+            panic!("No files were fed into the chain.")
+        }
         if let Some(path) = matches.opt_str("s") {
             chain.save(path).unwrap();
         }
@@ -84,21 +106,38 @@ mod test {
 
     #[test]
     fn gen_default() {
-        assert_eq!(markov_gen(vec!["prog".to_owned(), "test".to_owned()]).len(), 1)
+        assert_eq!(
+            markov_gen(vec!["prog".to_owned(), "test".to_owned()]).len(),
+            1
+        )
     }
 
     #[test]
     fn gen_number_after() {
-        assert_eq!(markov_gen(
-            vec!["markgen".to_owned(), "test".to_owned(), "-n".to_owned(), "3".to_owned()]
-        ).len(), 3)
+        assert_eq!(
+            markov_gen(vec![
+                "markgen".to_owned(),
+                "test".to_owned(),
+                "-n".to_owned(),
+                "3".to_owned()
+            ])
+            .len(),
+            3
+        )
     }
 
     #[test]
     fn gen_before_number() {
-        assert_eq!(markov_gen(
-            vec!["markgen".to_owned(), "-n".to_owned(), "3".to_owned(), "test".to_owned()]
-        ).len(), 3)
+        assert_eq!(
+            markov_gen(vec![
+                "markgen".to_owned(),
+                "-n".to_owned(),
+                "3".to_owned(),
+                "test".to_owned()
+            ])
+            .len(),
+            3
+        )
     }
 
     #[test]
@@ -110,12 +149,22 @@ mod test {
     #[test]
     #[should_panic(expected = "Expected positive integer argument to -n, found 0.")]
     fn gen_invalid_n_arg_zero() {
-        markov_gen(vec!["prog".to_owned(), "test".to_owned(), "-n".to_owned(), "0".to_owned()]);
+        markov_gen(vec![
+            "prog".to_owned(),
+            "test".to_owned(),
+            "-n".to_owned(),
+            "0".to_owned(),
+        ]);
     }
 
     #[test]
     #[should_panic(expected = "Expected positive integer argument to -n, found test.")]
     fn gen_invalid_n_arg_string() {
-        markov_gen(vec!["prog".to_owned(), "test".to_owned(), "-n".to_owned(), "test".to_owned()]);
+        markov_gen(vec![
+            "prog".to_owned(),
+            "test".to_owned(),
+            "-n".to_owned(),
+            "test".to_owned(),
+        ]);
     }
 }
