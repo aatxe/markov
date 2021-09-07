@@ -64,7 +64,7 @@ fn markov_gen(args: Vec<String>) -> Vec<String> {
     opts.optflag("h", "help", "print this help menu");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
-        Err(e) => panic!(e.to_string()),
+        Err(e) => panic!("{}", e.to_string()),
     };
     if matches.opt_present("h") {
         let brief = format!("Usage: {} FILE1 [FILE2 FILE3 ...] [options]", args[0]);
