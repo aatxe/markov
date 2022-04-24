@@ -129,7 +129,7 @@ where
             self.map
                 .get_mut(&p[0..self.order].to_vec())
                 .unwrap()
-                .add(p[self.order].clone());
+                .add(p[self.order].clone(), 1);
         }
         self
     }
@@ -177,6 +177,23 @@ where
             }
         }
         ret
+    }
+
+    /// Merges 2 chains (self and other) into self, consuming the other one. Both chains must be of
+    /// the same order. This method is useful when you want to speed up chain building - chains
+    /// built independently (e.g. in parallel with rayon) can be merged into a final one.
+    pub fn merge(&mut self, other: Chain<T>) -> &Chain<T> {
+        assert!(self.order == other.order);
+
+        for (tokens, next) in other.map {
+            let states = self.map.entry(tokens).or_insert_with(HashMap::new);
+
+            for (token, count) in next {
+                states.add(token, count);
+            }
+        }
+
+        self
     }
 
     /// Produces an infinite iterator of generated token collections.
@@ -379,7 +396,7 @@ where
 /// A collection of states for the Markov chain.
 trait States<T: PartialEq> {
     /// Adds a state to this states collection.
-    fn add(&mut self, token: Token<T>);
+    fn add(&mut self, token: Token<T>, count: usize);
     /// Gets the next state from this collection of states.
     fn next(&self) -> Token<T>;
 }
@@ -388,11 +405,11 @@ impl<T> States<T> for HashMap<Token<T>, usize>
 where
     T: Chainable,
 {
-    fn add(&mut self, token: Token<T>) {
+    fn add(&mut self, token: Token<T>, count: usize) {
         match self.entry(token) {
-            Occupied(mut e) => *e.get_mut() += 1,
+            Occupied(mut e) => *e.get_mut() += count,
             Vacant(e) => {
-                e.insert(1);
+                e.insert(count);
             }
         }
     }
@@ -548,6 +565,24 @@ mod test {
         chain.save("test.yaml").unwrap();
 
         let new_chain = Chain::load("test.yaml").unwrap();
+        assert_eq!(chain, new_chain);
+    }
+
+    #[test]
+    fn merge() {
+        let mut chain = Chain::of_order(2);
+        chain.feed_str("I like cats and I like dogs");
+        chain.feed_str("I like puzzles and I don't like dogs");
+        chain.feed_str("I don't like puzzles and I like dogs");
+
+        let mut new_chain = Chain::of_order(2);
+        new_chain.feed_str("I like cats and I like dogs");
+
+        let mut another_chain = Chain::of_order(2);
+        another_chain.feed_str("I like puzzles and I don't like dogs");
+        another_chain.feed_str("I don't like puzzles and I like dogs");
+
+        new_chain.merge(another_chain);
         assert_eq!(chain, new_chain);
     }
 }
