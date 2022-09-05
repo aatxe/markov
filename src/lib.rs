@@ -20,6 +20,8 @@
 //! ```
 #![warn(missing_docs)]
 
+extern crate linked_hash_map;
+
 #[cfg(feature = "graph")]
 extern crate itertools;
 #[cfg(feature = "graph")]
@@ -32,8 +34,10 @@ extern crate serde_derive;
 extern crate serde_yaml;
 
 use std::borrow::ToOwned;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::HashMap;
+//use std::collections::hash_map::Entry::{Occupied, Vacant};
+//use std::collections::HashMap;
+use linked_hash_map::Entry::{Occupied, Vacant};
+use linked_hash_map::LinkedHashMap;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::prelude::*;
@@ -68,7 +72,7 @@ pub struct Chain<T>
 where
     T: Chainable,
 {
-    map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
+    map: LinkedHashMap<Vec<Token<T>>, LinkedHashMap<Token<T>, usize>>,
     order: usize,
 }
 
@@ -98,8 +102,8 @@ where
         assert!(order != 0);
         Chain {
             map: {
-                let mut map = HashMap::new();
-                map.insert(vec![None; order], HashMap::new());
+                let mut map = LinkedHashMap::new();
+                map.insert(vec![None; order], LinkedHashMap::new());
                 map
             },
             order,
@@ -125,7 +129,7 @@ where
         for p in toks.windows(self.order + 1) {
             self.map
                 .entry(p[0..self.order].to_vec())
-                .or_insert_with(HashMap::new);
+                .or_insert_with(LinkedHashMap::new);
             self.map
                 .get_mut(&p[0..self.order].to_vec())
                 .unwrap()
@@ -226,7 +230,7 @@ where
         assert!(self.order == other.order);
 
         for (tokens, next) in other.map {
-            let states = self.map.entry(tokens).or_insert_with(HashMap::new);
+            let states = self.map.entry(tokens).or_insert_with(LinkedHashMap::new);
 
             for (token, count) in next {
                 states.add(token, count);
@@ -271,7 +275,7 @@ where
             })
             .unique()
             .map(|state| (state.clone(), graph.add_node(state)))
-            .collect::<HashMap<_, _>>();
+            .collect::<LinkedHashMap<_, _>>();
 
         // Create all edges, and add them to the graph.
         self.map
@@ -441,7 +445,7 @@ trait States<T: PartialEq> {
     fn next<R: Rng>(&self, rng: &mut R) -> Token<T>;
 }
 
-impl<T> States<T> for HashMap<Token<T>, usize>
+impl<T> States<T> for LinkedHashMap<Token<T>, usize>
 where
     T: Chainable,
 {
