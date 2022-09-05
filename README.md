@@ -9,8 +9,6 @@
 [bws]: https://cdn.rawgit.com/syl20bnr/spacemacs/442d025779da2f62fc86c2082703697714db6514/assets/spacemacs-badge.svg
 [sm]: http://spacemacs.org
 
-> Forked from [aatxe/markov](https://github.com/aatxe/markov) but adds the possiblity to pass in your own RNG
-
 A generic implementation of a [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) in Rust. It
 supports all types that implement `Eq`, `Hash`, and `Clone`, and has some specific helpers for
 working with `String` as text generation is the most likely use case. You can find up-to-date,
