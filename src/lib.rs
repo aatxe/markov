@@ -20,8 +20,6 @@
 //! ```
 #![warn(missing_docs)]
 
-extern crate linked_hash_map;
-
 #[cfg(feature = "graph")]
 extern crate itertools;
 #[cfg(feature = "graph")]
@@ -33,11 +31,19 @@ extern crate serde_derive;
 #[cfg(feature = "yaml")]
 extern crate serde_yaml;
 
+#[cfg(feature = "seedable")]
+extern crate linked_hash_map;
+
 use std::borrow::ToOwned;
-//use std::collections::hash_map::Entry::{Occupied, Vacant};
-//use std::collections::HashMap;
+
+#[cfg(feature = "seedable")]
 use linked_hash_map::Entry::{Occupied, Vacant};
-use linked_hash_map::LinkedHashMap;
+#[cfg(feature = "seedable")]
+use linked_hash_map::LinkedHashMap as HashMap;
+#[cfg(not(feature = "seedable"))]
+use std::collections::hash_map::Entry::{Occupied, Vacant};
+#[cfg(not(feature = "seedable"))]
+use std::collections::HashMap;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::prelude::*;
@@ -72,7 +78,7 @@ pub struct Chain<T>
 where
     T: Chainable,
 {
-    map: LinkedHashMap<Vec<Token<T>>, LinkedHashMap<Token<T>, usize>>,
+    map: HashMap<Vec<Token<T>>, HashMap<Token<T>, usize>>,
     order: usize,
 }
 
@@ -102,8 +108,8 @@ where
         assert!(order != 0);
         Chain {
             map: {
-                let mut map = LinkedHashMap::new();
-                map.insert(vec![None; order], LinkedHashMap::new());
+                let mut map = HashMap::new();
+                map.insert(vec![None; order], HashMap::new());
                 map
             },
             order,
@@ -129,7 +135,7 @@ where
         for p in toks.windows(self.order + 1) {
             self.map
                 .entry(p[0..self.order].to_vec())
-                .or_insert_with(LinkedHashMap::new);
+                .or_insert_with(HashMap::new);
             self.map
                 .get_mut(&p[0..self.order].to_vec())
                 .unwrap()
@@ -148,6 +154,7 @@ where
     /// Generates a collection of tokens from the chain. This operation is `O(mn)` where `m` is the
     /// length of the generated collection, and `n` is the number of possible states from a given
     /// state. Takes a custom generator for RNG.
+    #[cfg(feature = "seedable")]
     pub fn generate_with_rng<R: Rng>(&self, rng: &mut R) -> Vec<T> {
         self.generate_base(rng)
     }
@@ -155,6 +162,7 @@ where
     /// Generates a collection of tokens from the chain. This operation is `O(mn)` where `m` is the
     /// length of the generated collection, and `n` is the number of possible states from a given
     /// state. Takes a seed.
+    #[cfg(feature = "seedable")]
     pub fn generate_with_seed(&self, seed: u64) -> Vec<T> {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         self.generate_base(&mut rng)
@@ -189,6 +197,7 @@ where
     /// operation is O(mn) where m is the length of the generated collection, and n is the number
     /// of possible states from a given state. This returns an empty vector if the token is not
     /// found. Takes a custom generator for RNG.
+    #[cfg(feature = "seedable")]
     pub fn generate_from_token_with_rng<R: Rng>(&self, token: T, rng: &mut R) -> Vec<T> {
         self.generate_from_token_base(token, rng)
     }
@@ -197,6 +206,7 @@ where
     /// operation is O(mn) where m is the length of the generated collection, and n is the number
     /// of possible states from a given state. This returns an empty vector if the token is not
     /// found. Takes a seed.
+    #[cfg(feature = "seedable")]
     pub fn generate_from_token_with_seed(&self, token: T, seed: u64) -> Vec<T> {
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         self.generate_from_token_base(token, &mut rng)
@@ -230,7 +240,7 @@ where
         assert!(self.order == other.order);
 
         for (tokens, next) in other.map {
-            let states = self.map.entry(tokens).or_insert_with(LinkedHashMap::new);
+            let states = self.map.entry(tokens).or_insert_with(HashMap::new);
 
             for (token, count) in next {
                 states.add(token, count);
@@ -275,7 +285,7 @@ where
             })
             .unique()
             .map(|state| (state.clone(), graph.add_node(state)))
-            .collect::<LinkedHashMap<_, _>>();
+            .collect::<HashMap<_, _>>();
 
         // Create all edges, and add them to the graph.
         self.map
@@ -445,7 +455,7 @@ trait States<T: PartialEq> {
     fn next<R: Rng>(&self, rng: &mut R) -> Token<T>;
 }
 
-impl<T> States<T> for LinkedHashMap<Token<T>, usize>
+impl<T> States<T> for HashMap<Token<T>, usize>
 where
     T: Chainable,
 {
