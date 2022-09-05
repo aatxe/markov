@@ -57,7 +57,7 @@ use std::path::Path;
 use itertools::Itertools;
 #[cfg(feature = "graph")]
 use petgraph::graph::Graph;
-use rand::{thread_rng, Rng, SeedableRng};
+use rand::{thread_rng, Rng};
 #[cfg(feature = "yaml")]
 use serde::de::DeserializeOwned;
 #[cfg(feature = "yaml")]
