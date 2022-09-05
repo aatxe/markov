@@ -47,7 +47,7 @@ use std::path::Path;
 use itertools::Itertools;
 #[cfg(feature = "graph")]
 use petgraph::graph::Graph;
-use rand::{thread_rng, Rng};
+use rand::{thread_rng, Rng, SeedableRng};
 #[cfg(feature = "yaml")]
 use serde::de::DeserializeOwned;
 #[cfg(feature = "yaml")]
@@ -138,10 +138,29 @@ where
     /// length of the generated collection, and `n` is the number of possible states from a given
     /// state.
     pub fn generate(&self) -> Vec<T> {
+        self.generate_base(&mut thread_rng())
+    }
+
+    /// Generates a collection of tokens from the chain. This operation is `O(mn)` where `m` is the
+    /// length of the generated collection, and `n` is the number of possible states from a given
+    /// state. Takes a custom generator for RNG.
+    pub fn generate_with_rng<R: Rng>(&self, rng: &mut R) -> Vec<T> {
+        self.generate_base(rng)
+    }
+
+    /// Generates a collection of tokens from the chain. This operation is `O(mn)` where `m` is the
+    /// length of the generated collection, and `n` is the number of possible states from a given
+    /// state. Takes a seed.
+    pub fn generate_with_seed(&self, seed: u64) -> Vec<T> {
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        self.generate_base(&mut rng)
+    }
+
+    fn generate_base<R: Rng>(&self, rng: &mut R) -> Vec<T> {
         let mut ret = Vec::new();
         let mut curs = vec![None; self.order];
         loop {
-            let next = self.map[&curs].next();
+            let next = self.map[&curs].next(rng);
             curs = curs[1..self.order].to_vec();
             curs.push(next.clone());
             if let Some(next) = next {
@@ -159,6 +178,27 @@ where
     /// of possible states from a given state. This returns an empty vector if the token is not
     /// found.
     pub fn generate_from_token(&self, token: T) -> Vec<T> {
+        self.generate_from_token_base(token, &mut thread_rng())
+    }
+
+    /// Generates a collection of tokens from the chain, starting with the given token. This
+    /// operation is O(mn) where m is the length of the generated collection, and n is the number
+    /// of possible states from a given state. This returns an empty vector if the token is not
+    /// found. Takes a custom generator for RNG.
+    pub fn generate_from_token_with_rng<R: Rng>(&self, token: T, rng: &mut R) -> Vec<T> {
+        self.generate_from_token_base(token, rng)
+    }
+
+    /// Generates a collection of tokens from the chain, starting with the given token. This
+    /// operation is O(mn) where m is the length of the generated collection, and n is the number
+    /// of possible states from a given state. This returns an empty vector if the token is not
+    /// found. Takes a seed.
+    pub fn generate_from_token_with_seed(&self, token: T, seed: u64) -> Vec<T> {
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        self.generate_from_token_base(token, &mut rng)
+    }
+
+    fn generate_from_token_base<R: Rng>(&self, token: T, rng: &mut R) -> Vec<T> {
         let mut curs = vec![None; self.order - 1];
         curs.push(Some(token.clone()));
         if !self.map.contains_key(&curs) {
@@ -166,7 +206,7 @@ where
         }
         let mut ret = vec![token];
         loop {
-            let next = self.map[&curs].next();
+            let next = self.map[&curs].next(rng);
             curs = curs[1..self.order].to_vec();
             curs.push(next.clone());
             if let Some(next) = next {
@@ -398,7 +438,7 @@ trait States<T: PartialEq> {
     /// Adds a state to this states collection.
     fn add(&mut self, token: Token<T>, count: usize);
     /// Gets the next state from this collection of states.
-    fn next(&self) -> Token<T>;
+    fn next<R: Rng>(&self, rng: &mut R) -> Token<T>;
 }
 
 impl<T> States<T> for HashMap<Token<T>, usize>
@@ -414,13 +454,17 @@ where
         }
     }
 
-    fn next(&self) -> Token<T> {
+    fn next<R>(&self, rng: &mut R) -> Token<T>
+    where
+        R: Rng,
+    {
         let mut sum = 0;
         for &value in self.values() {
             sum += value;
         }
-        let mut rng = thread_rng();
+
         let cap = rng.gen_range(0..sum);
+
         sum = 0;
         for (key, &value) in self.iter() {
             sum += value;
