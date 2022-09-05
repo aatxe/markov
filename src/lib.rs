@@ -492,6 +492,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use rand::SeedableRng;
+
     use super::Chain;
 
     #[test]
@@ -523,6 +525,27 @@ mod test {
     }
 
     #[test]
+    fn generate_with_seed() {
+        let mut chain = Chain::new();
+        chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
+        let v = chain.generate_with_seed(3);
+        assert!(v == vec![3, 5, 10]);
+        let v = chain.generate_with_seed(1);
+        assert!(v == vec![5, 10]);
+    }
+
+    #[test]
+    fn generate_with_rng() {
+        let mut rng = rand::rngs::StdRng::seed_from_u64(3);
+        let mut chain = Chain::new();
+        chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
+        let v = chain.generate_with_rng(&mut rng);
+        assert!(v == vec![3, 5, 10]);
+        let v = chain.generate_with_rng(&mut rng);
+        assert!(v == vec![3, 5, 12]);
+    }
+
+    #[test]
     fn generate_for_higher_order() {
         let mut chain = Chain::of_order(2);
         chain.feed(vec![3u8, 5, 10]).feed(vec![2, 3, 5, 12]);
@@ -542,6 +565,27 @@ mod test {
         chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
         let v = chain.generate_from_token(5);
         assert!([vec![5, 10], vec![5, 12]].contains(&v));
+    }
+
+    #[test]
+    fn generate_from_token_with_seed() {
+        let mut chain = Chain::new();
+        chain.feed(vec![3u8, 5, 10, 13]).feed(vec![5, 12, 10]);
+        let v = chain.generate_from_token_with_seed(5, 3);
+        assert!(v == vec![5, 10, 13]);
+        let v = chain.generate_from_token_with_seed(5, 1);
+        assert!(v == vec![5, 12, 10, 13]);
+    }
+
+    #[test]
+    fn generate_from_token_with_rng() {
+        let mut rng = rand::rngs::StdRng::seed_from_u64(3);
+        let mut chain = Chain::new();
+        chain.feed(vec![3u8, 5, 10, 13]).feed(vec![5, 12, 10]);
+        let v = chain.generate_from_token_with_rng(5, &mut rng);
+        assert!(v == vec![5, 10, 13]);
+        let v = chain.generate_from_token_with_rng(5, &mut rng);
+        assert!(v == vec![5, 10]);
     }
 
     #[test]
