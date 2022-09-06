@@ -34,12 +34,19 @@ extern crate serde_yaml;
 #[cfg(feature = "seedable")]
 extern crate linked_hash_map;
 
+#[cfg(feature = "seedable")]
+extern crate rand_chacha;
+
 use std::borrow::ToOwned;
 
 #[cfg(feature = "seedable")]
 use linked_hash_map::Entry::{Occupied, Vacant};
 #[cfg(feature = "seedable")]
 use linked_hash_map::LinkedHashMap as HashMap;
+
+#[cfg(feature = "seedable")]
+use rand_chacha::{rand_core::SeedableRng, ChaCha12Rng};
+
 #[cfg(not(feature = "seedable"))]
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 #[cfg(not(feature = "seedable"))]
@@ -57,7 +64,7 @@ use std::path::Path;
 use itertools::Itertools;
 #[cfg(feature = "graph")]
 use petgraph::graph::Graph;
-use rand::{thread_rng, Rng, SeedableRng};
+use rand::{thread_rng, Rng};
 #[cfg(feature = "yaml")]
 use serde::de::DeserializeOwned;
 #[cfg(feature = "yaml")]
@@ -164,7 +171,7 @@ where
     /// state. Takes a seed.
     #[cfg(feature = "seedable")]
     pub fn generate_with_seed(&self, seed: u64) -> Vec<T> {
-        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut rng = ChaCha12Rng::seed_from_u64(seed);
         self.generate_base(&mut rng)
     }
 
@@ -208,7 +215,7 @@ where
     /// found. Takes a seed.
     #[cfg(feature = "seedable")]
     pub fn generate_from_token_with_seed(&self, token: T, seed: u64) -> Vec<T> {
-        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let mut rng = ChaCha12Rng::seed_from_u64(seed);
         self.generate_from_token_base(token, &mut rng)
     }
 
@@ -492,7 +499,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use rand::SeedableRng;
+
+    use rand_chacha::{rand_core::SeedableRng, ChaCha12Rng};
 
     use super::Chain;
 
@@ -536,7 +544,7 @@ mod test {
 
     #[test]
     fn generate_with_rng() {
-        let mut rng = rand::rngs::StdRng::seed_from_u64(3);
+        let mut rng = ChaCha12Rng::seed_from_u64(3);
         let mut chain = Chain::new();
         chain.feed(vec![3u8, 5, 10]).feed(vec![5, 12]);
         let v = chain.generate_with_rng(&mut rng);
@@ -579,7 +587,7 @@ mod test {
 
     #[test]
     fn generate_from_token_with_rng() {
-        let mut rng = rand::rngs::StdRng::seed_from_u64(3);
+        let mut rng = ChaCha12Rng::seed_from_u64(3);
         let mut chain = Chain::new();
         chain.feed(vec![3u8, 5, 10, 13]).feed(vec![5, 12, 10]);
         let v = chain.generate_from_token_with_rng(5, &mut rng);
