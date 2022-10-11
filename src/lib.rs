@@ -108,8 +108,17 @@ where
     }
 
     /// Returns a HashMap of current counts of token T
-    pub fn rank(&self, token: Vec<T>) -> Vec<(&Token<T>, &usize)> {
-        let toks: Vec<_> = token.into_iter().map(|a| Some(a)).collect();
+    pub fn rank<S: AsRef<[T]>>(&self, tokens: S) -> Vec<(&Token<T>, &usize)> {
+        let tokens = tokens.as_ref();
+        if tokens.is_empty() {
+            return Vec::new();
+        }
+        println!("Tokens {:?}", tokens);
+        let mut toks = vec![];
+        toks.extend(tokens.iter().map(|token| Some(token.clone())));
+        if !self.map.contains_key(&toks) {
+            return Vec::new()
+        }
         println!("Tokens {:?}", toks);
         println!("Map {:?}", self.map);
         let result = self.map.get(&toks).unwrap();
