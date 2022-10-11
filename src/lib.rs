@@ -107,17 +107,16 @@ where
         }
     }
 
-    /// Returns a HashMap of current counts of token T
-    pub fn rank<S: AsRef<[T]>>(&self, tokens: S) -> Vec<(&Token<T>, &usize)> {
+    /// Returns a vector of current counts of token T
+    fn rank<S: AsRef<[T]>>(&self, tokens: S) -> Vec<(&Token<T>, &usize)> {
         let tokens = tokens.as_ref();
         if tokens.is_empty() {
             return Vec::new();
         }
-        println!("Tokens {:?}", tokens);
         let mut toks = vec![];
         toks.extend(tokens.iter().map(|token| Some(token.clone())));
         if !self.map.contains_key(&toks) {
-            return Vec::new()
+            return Vec::new();
         }
         println!("Tokens {:?}", toks);
         println!("Map {:?}", self.map);
@@ -127,6 +126,12 @@ where
             .sorted_by(|&a, &b| Ord::cmp(a.1, b.1).reverse())
             .collect();
         sorted
+    }
+
+    /// Get iterator over all tokens following a given set of tokens
+    /// (sorted by count)
+    pub fn iter_rank<S: AsRef<[T]>>(&self, tokens: S) -> RankIterator<T> {
+        RankIterator::new(self, tokens)
     }
 
     /// Determines whether or not the chain is empty. A chain is considered empty if nothing has
@@ -455,6 +460,44 @@ where
     }
 }
 
+#[derive(Debug)]
+/// Iterator over tokens sorted by rank given a token (sorted by highest probability)
+pub struct RankIterator<'a, T>
+where
+    T: Chainable + 'a,
+{
+    chain: Vec<(&'a Token<T>, &'a usize)>,
+    count: usize,
+}
+
+impl<'a, T> RankIterator<'a, T>
+where
+    T: Chainable + 'a,
+{
+    /// Generate rank iterator
+    pub fn new<S: AsRef<[T]>>(chain: &'a Chain<T>, tokens: S) -> Self {
+        let m = chain.rank(tokens);
+        RankIterator { chain: m, count: 0 }
+    }
+}
+
+impl<'a, T> Iterator for RankIterator<'a, T>
+where
+    T: Chainable + 'a,
+{
+    type Item = &'a Token<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.count >= self.chain.len() {
+            None
+        } else {
+            let r = Some(self.chain[self.count].0);
+            self.count += 1;
+            r
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Chain;
@@ -498,16 +541,47 @@ mod test {
     }
 
     #[test]
+    fn iter_rank() {
+        let mut chain = Chain::new();
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 3, 12, 3, 5]);
+        let mut iter = chain.iter_rank(vec![3]);
+        assert_eq!(iter.next(), Some(&Some(5)));
+        assert_eq!(iter.next(), Some(&Some(12)));
+        assert_eq!(iter.next(), None);
+
+        let mut iter = chain.iter_rank(vec![3]).take(1);
+        assert_eq!(iter.next(), Some(&Some(5)));
+        assert_eq!(iter.next(), None);
+
+        let mut iter = chain.iter_rank(vec![]).take(1);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn iter_rank_higher_order() {
+        let mut chain = Chain::of_order(2);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+        let mut iter = chain.iter_rank(vec![3, 5]);
+        assert_eq!(iter.next(), Some(&Some(10)));
+        assert_eq!(iter.next(), None);
+
+        chain.feed(vec![3, 10, 3, 11, 3, 11, 3, 10, 3, 11]);
+        let mut iter = chain.iter_rank(vec![3, 10]);
+        assert_eq!(iter.next(), Some(&Some(3)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
     fn rank_higher_order() {
         let mut chain = Chain::of_order(2);
         chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
-        let vec = chain.rank(vec![3,5]);
+        let vec = chain.rank(vec![3, 5]);
         let mut iter = vec.iter();
         assert_eq!(iter.next(), Some(&(&Some(10), &1usize)));
         assert_eq!(iter.next(), None);
 
         chain.feed(vec![3, 10, 3, 11, 3, 11, 3, 10, 3, 11]);
-        let vec = chain.rank(vec![3,10]);
+        let vec = chain.rank(vec![3, 10]);
         let mut iter = vec.iter();
         assert_eq!(iter.next(), Some(&(&Some(3), &2usize)));
         assert_eq!(iter.next(), None);
