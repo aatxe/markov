@@ -108,10 +108,8 @@ where
     }
 
     /// Returns a HashMap of current counts of token T
-    pub fn rank(&self, token: T) -> Vec<(&Token<T>, &usize)> {
-        // let mut toks = vec![None; self.order];
-        // toks.push(Some(token));
-        let toks = vec![Some(token)];
+    pub fn rank(&self, token: Vec<T>) -> Vec<(&Token<T>, &usize)> {
+        let toks: Vec<_> = token.into_iter().map(|a| Some(a)).collect();
         println!("Tokens {:?}", toks);
         println!("Map {:?}", self.map);
         let result = self.map.get(&toks).unwrap();
@@ -476,13 +474,13 @@ mod test {
     fn rank() {
         let mut chain = Chain::new();
         chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
-        let vec = chain.rank(3);
+        let vec = chain.rank(vec![3]);
         let mut iter = vec.iter();
         assert_eq!(iter.next(), Some(&(&Some(5), &1usize)));
         assert_eq!(iter.next(), None);
 
         chain.feed(vec![3, 10, 3, 11, 3, 11, 3, 10, 3, 11]);
-        let vec = chain.rank(3);
+        let vec = chain.rank(vec![3]);
         let mut iter = vec.iter();
         assert_eq!(iter.next(), Some(&(&Some(11), &3usize)));
         assert_eq!(iter.next(), Some(&(&Some(10), &2usize)));
@@ -494,17 +492,15 @@ mod test {
     fn rank_higher_order() {
         let mut chain = Chain::of_order(2);
         chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
-        let vec = chain.rank(3);
+        let vec = chain.rank(vec![3,5]);
         let mut iter = vec.iter();
-        assert_eq!(iter.next(), Some(&(&Some(5), &1usize)));
+        assert_eq!(iter.next(), Some(&(&Some(10), &1usize)));
         assert_eq!(iter.next(), None);
 
         chain.feed(vec![3, 10, 3, 11, 3, 11, 3, 10, 3, 11]);
-        let vec = chain.rank(3);
+        let vec = chain.rank(vec![3,10]);
         let mut iter = vec.iter();
-        assert_eq!(iter.next(), Some(&(&Some(11), &3usize)));
-        assert_eq!(iter.next(), Some(&(&Some(10), &2usize)));
-        assert_eq!(iter.next(), Some(&(&Some(5), &1usize)));
+        assert_eq!(iter.next(), Some(&(&Some(3), &2usize)));
         assert_eq!(iter.next(), None);
     }
 
