@@ -131,6 +131,9 @@ where
     /// Get iterator over all tokens following a given set of tokens
     /// (sorted by count)
     pub fn iter_rank<S: AsRef<[T]>>(&self, tokens: S) -> RankIterator<T> {
+        // TODO:
+        // The iterator is not stable. If elements have the same count, they
+        // have a different order when put out
         RankIterator::new(self, tokens)
     }
 
