@@ -63,7 +63,7 @@ type Token<T> = Option<T>;
 
 /// A generic [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) for almost any type.
 /// In particular, elements of the chain must be `Eq`, `Hash`, and `Clone`.
-#[derive(PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Chain<T>
 where
     T: Chainable,
