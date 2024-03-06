@@ -34,6 +34,7 @@ extern crate serde_yaml;
 use std::borrow::ToOwned;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::prelude::*;
@@ -56,8 +57,8 @@ use serde::Serialize;
 use serde_yaml as yaml;
 
 /// The definition of all types that can be used in a `Chain`.
-pub trait Chainable: Eq + Hash + Clone {}
-impl<T> Chainable for T where T: Eq + Hash + Clone {}
+pub trait Chainable: Eq + Hash + Clone + Debug {}
+impl<T> Chainable for T where T: Eq + Hash + Clone + Debug {}
 
 type Token<T> = Option<T>;
 
@@ -104,6 +105,36 @@ where
             },
             order,
         }
+    }
+
+    /// Returns a vector of current counts of token T
+    fn rank<S: AsRef<[T]>>(&self, tokens: S) -> Vec<(&Token<T>, &usize)> {
+        let tokens = tokens.as_ref();
+        if tokens.is_empty() {
+            return Vec::new();
+        }
+        let mut toks = vec![];
+        toks.extend(tokens.iter().map(|token| Some(token.clone())));
+        if !self.map.contains_key(&toks) {
+            return Vec::new();
+        }
+        println!("Tokens {:?}", toks);
+        println!("Map {:?}", self.map);
+        let result = self.map.get(&toks).unwrap();
+        let sorted: Vec<_> = result
+            .iter()
+            .sorted_by(|&a, &b| Ord::cmp(a.1, b.1).reverse())
+            .collect();
+        sorted
+    }
+
+    /// Get iterator over all tokens following a given set of tokens
+    /// (sorted by count)
+    pub fn iter_rank<S: AsRef<[T]>>(&self, tokens: S) -> RankIterator<T> {
+        // TODO:
+        // The iterator is not stable. If elements have the same count, they
+        // have a different order when put out
+        RankIterator::new(self, tokens)
     }
 
     /// Determines whether or not the chain is empty. A chain is considered empty if nothing has
@@ -432,6 +463,44 @@ where
     }
 }
 
+#[derive(Debug)]
+/// Iterator over tokens sorted by rank given a token (sorted by highest probability)
+pub struct RankIterator<'a, T>
+where
+    T: Chainable + 'a,
+{
+    chain: Vec<(&'a Token<T>, &'a usize)>,
+    count: usize,
+}
+
+impl<'a, T> RankIterator<'a, T>
+where
+    T: Chainable + 'a,
+{
+    /// Generate rank iterator
+    pub fn new<S: AsRef<[T]>>(chain: &'a Chain<T>, tokens: S) -> Self {
+        let m = chain.rank(tokens);
+        RankIterator { chain: m, count: 0 }
+    }
+}
+
+impl<'a, T> Iterator for RankIterator<'a, T>
+where
+    T: Chainable + 'a,
+{
+    type Item = &'a Token<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.count >= self.chain.len() {
+            None
+        } else {
+            let r = Some(self.chain[self.count].0);
+            self.count += 1;
+            r
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Chain;
@@ -454,6 +523,71 @@ mod test {
     fn feed() {
         let mut chain = Chain::new();
         chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+    }
+
+    #[test]
+    fn rank() {
+        let mut chain = Chain::new();
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+        let vec = chain.rank(vec![3]);
+        let mut iter = vec.iter();
+        assert_eq!(iter.next(), Some(&(&Some(5), &1usize)));
+        assert_eq!(iter.next(), None);
+
+        chain.feed(vec![3, 10, 3, 11, 3, 11, 3, 10, 3, 11]);
+        let vec = chain.rank(vec![3]);
+        let mut iter = vec.iter();
+        assert_eq!(iter.next(), Some(&(&Some(11), &3usize)));
+        assert_eq!(iter.next(), Some(&(&Some(10), &2usize)));
+        assert_eq!(iter.next(), Some(&(&Some(5), &1usize)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn iter_rank() {
+        let mut chain = Chain::new();
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 3, 12, 3, 5]);
+        let mut iter = chain.iter_rank(vec![3]);
+        assert_eq!(iter.next(), Some(&Some(5)));
+        assert_eq!(iter.next(), Some(&Some(12)));
+        assert_eq!(iter.next(), None);
+
+        let mut iter = chain.iter_rank(vec![3]).take(1);
+        assert_eq!(iter.next(), Some(&Some(5)));
+        assert_eq!(iter.next(), None);
+
+        let mut iter = chain.iter_rank(vec![]).take(1);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn iter_rank_higher_order() {
+        let mut chain = Chain::of_order(2);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+        let mut iter = chain.iter_rank(vec![3, 5]);
+        assert_eq!(iter.next(), Some(&Some(10)));
+        assert_eq!(iter.next(), None);
+
+        chain.feed(vec![3, 10, 3, 11, 3, 11, 3, 10, 3, 11]);
+        let mut iter = chain.iter_rank(vec![3, 10]);
+        assert_eq!(iter.next(), Some(&Some(3)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn rank_higher_order() {
+        let mut chain = Chain::of_order(2);
+        chain.feed(vec![3, 5, 10]).feed(vec![5, 12]);
+        let vec = chain.rank(vec![3, 5]);
+        let mut iter = vec.iter();
+        assert_eq!(iter.next(), Some(&(&Some(10), &1usize)));
+        assert_eq!(iter.next(), None);
+
+        chain.feed(vec![3, 10, 3, 11, 3, 11, 3, 10, 3, 11]);
+        let vec = chain.rank(vec![3, 10]);
+        let mut iter = vec.iter();
+        assert_eq!(iter.next(), Some(&(&Some(3), &2usize)));
+        assert_eq!(iter.next(), None);
     }
 
     #[test]
